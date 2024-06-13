@@ -87,7 +87,7 @@ My `Index.cshtml` file in `~/Views/Home` now looks like:
 ```
 
 This should give a rather empty index page to look at. When you run the application, it will look something like this:
-![empty-mvc](./images/2024-06-13-tailwind-using-msbuild-in-dotnet/empty-mvc.png)
+![empty-mvc](/assets/images/2024-06-13-tailwind-using-msbuild-in-dotnet/empty-mvc.png)
 
 Alright, now that we have our empty MVC project set up, let's get Tailwind!
 
@@ -257,7 +257,7 @@ Making your `_Layout.cshtml` file now look like:
 
 Let's run the project and you should see something like:
 
-![tailwind-mvc](./images/2024-06-13-tailwind-using-msbuild-in-dotnet/tailwind-mvc.png)
+![tailwind-mvc](/assets/images/2024-06-13-tailwind-using-msbuild-in-dotnet/tailwind-mvc.png)
 
 Congratulations! You now have Tailwind running without Node JS in an ASP.NET Core MVC application.
 
@@ -309,7 +309,7 @@ We can do so by adding an [ItemGroup](https://learn.microsoft.com/en-us/visualst
 
 To verify things work, let's change our background color in our `_Layout.cshtml` file to `bg-zinc-600`. After that, build and run the project and verify you see the new background color:
 
-![zinc-mvc](./images/2024-06-13-tailwind-using-msbuild-in-dotnet/zinc-mvc.png)
+![zinc-mvc](/assets/images/2024-06-13-tailwind-using-msbuild-in-dotnet/zinc-mvc.png)
 
 Nice!
 
