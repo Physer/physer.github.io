@@ -47,42 +47,47 @@ Since the scaffolded MVC project contains Bootstrap and several other files that
 
 After the clean up, the `_Layout.cshtml` file in `~/Views/Shared` now looks like this:
 
-```cshtml
+```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - TailwindDotnet</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/TailwindDotnet.styles.css" asp-append-version="true" />
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="~/TailwindDotnet.styles.css"
+      asp-append-version="true"
+    />
+  </head>
+  <body>
     <div>
-        <main>
-            @RenderBody()
-        </main>
+      <main>@RenderBody()</main>
     </div>
     <script src="~/js/site.js" asp-append-version="true"></script>
-</body>
+  </body>
 </html>
 ```
 
 My `Index.cshtml` file in `~/Views/Home` now looks like:
 
-```cshtml
-@{
-    ViewData["Title"] = "Home Page";
-}
+```html
+@{ ViewData["Title"] = "Home Page"; }
 
 <div>
-    <h1>Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+  <h1>Welcome</h1>
+  <p>
+    Learn about
+    <a href="https://learn.microsoft.com/aspnet/core"
+      >building Web apps with ASP.NET Core</a
+    >.
+  </p>
 </div>
 ```
 
 This should give a rather empty index page to look at. When you run the application, it will look something like this:
-![empty-mvc](./../images/2024-06-13-tailwind-using-msbuild-in-dotnet/empty-mvc.png)
+![empty-mvc](./images/2024-06-13-tailwind-using-msbuild-in-dotnet/empty-mvc.png)
 
 Alright, now that we have our empty MVC project set up, let's get Tailwind!
 
@@ -189,24 +194,26 @@ I have added some background color and a container to our body and div elements.
 
 My file now looks like:
 
-```cshtml
+```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - TailwindDotnet</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/TailwindDotnet.styles.css" asp-append-version="true" />
-</head>
-<body class="bg-slate-900">
+    <link
+      rel="stylesheet"
+      href="~/TailwindDotnet.styles.css"
+      asp-append-version="true"
+    />
+  </head>
+  <body class="bg-slate-900">
     <div class="container mx-auto text-white">
-        <main>
-            @RenderBody()
-        </main>
+      <main>@RenderBody()</main>
     </div>
     <script src="~/js/site.js" asp-append-version="true"></script>
-</body>
+  </body>
 </html>
 ```
 
@@ -224,31 +231,33 @@ Let's link our new generated file in our `_Layout.cshtml` file by adding the fol
 
 Making your `_Layout.cshtml` file now look like:
 
-```cshtml
+```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - TailwindDotnet</title>
     <link rel="stylesheet" href="~/css/output.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/TailwindDotnet.styles.css" asp-append-version="true" />
-</head>
-<body class="bg-slate-900">
+    <link
+      rel="stylesheet"
+      href="~/TailwindDotnet.styles.css"
+      asp-append-version="true"
+    />
+  </head>
+  <body class="bg-slate-900">
     <div class="container mx-auto text-white">
-        <main>
-            @RenderBody()
-        </main>
+      <main>@RenderBody()</main>
     </div>
     <script src="~/js/site.js" asp-append-version="true"></script>
-</body>
+  </body>
 </html>
 ```
 
 Let's run the project and you should see something like:
 
-![tailwind-mvc](./../images/2024-06-13-tailwind-using-msbuild-in-dotnet/tailwind-mvc.png)
+![tailwind-mvc](./images/2024-06-13-tailwind-using-msbuild-in-dotnet/tailwind-mvc.png)
 
 Congratulations! You now have Tailwind running without Node JS in an ASP.NET Core MVC application.
 
@@ -300,7 +309,7 @@ We can do so by adding an [ItemGroup](https://learn.microsoft.com/en-us/visualst
 
 To verify things work, let's change our background color in our `_Layout.cshtml` file to `bg-zinc-600`. After that, build and run the project and verify you see the new background color:
 
-![zinc-mvc](./../images/2024-06-13-tailwind-using-msbuild-in-dotnet/zinc-mvc.png)
+![zinc-mvc](./images/2024-06-13-tailwind-using-msbuild-in-dotnet/zinc-mvc.png)
 
 Nice!
 
