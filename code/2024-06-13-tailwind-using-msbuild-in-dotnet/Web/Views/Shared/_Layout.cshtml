@@ -1,24 +1,19 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-slate-900">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Web</title>
+    <link rel="stylesheet" href="~/css/output.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Web.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <div>
+    <div class="container mx-auto text-white">
         <main>
             @RenderBody()
         </main>
     </div>
-
-    <footer>
-        <div>
-            &copy; 2024 - Web
-        </div>
-    </footer>
     <script src="~/js/site.js" asp-append-version="true"></script>
 </body>
 </html>
