@@ -38,6 +38,14 @@ You can see the order in this diagram. More information can be found at the link
 
 As you can see, these can be credentials meant for deployed services (e.g. an Azure App Service), as well as for development credentials in Visual Studio or interactive through a user input dialog.
 
+### Connecting your Azure account
+
+Due to the nature of the `DefaultAzureCredential` class, it's imperative that we at least log in to our Azure account. There are multiple ways to do so (as described in the diagram above).
+
+In this blog series, we'll use the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/get-started-with-azure-cli).
+
+Verify your Azure CLI is available in your terminal. Run `az version`. When your Azure CLI is available, log in to your Azure account by running `az login`. We're not going to use any real Azure services (yet) so don't worry about too much about setting the subscription.
+
 ### Wiring it up
 
 In [part 2]() of this blog series we've created a simple .NET application to interact with our Blob service from Azurite. Let's open up our application and navigate to the `Program.cs` file.

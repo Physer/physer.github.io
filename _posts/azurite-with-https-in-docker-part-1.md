@@ -27,15 +27,15 @@ The first part of this blog series will focus on setting up our environment. We'
 
 ## Prerequisites
 
-If you want to follow along with this blog series, you will need the following software:
+If you want to follow along with this blog series, you will need the following software and services:
 
 - [Docker](https://www.docker.com/products/docker-desktop/)
 - [Docker Compose](https://docs.docker.com/compose/)
 - [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 - [mkcert](https://github.com/FiloSottile/mkcert)
 - [Azure Storage Explorer](https://azure.microsoft.com/en-us/products/storage/storage-explorer)
-
-If you also wish to follow along with the part where we connect our application an actual Azure cloud environment, you'll also need an Azure account.
+- [An Azure account](https://azure.microsoft.com/en-us/free)
+- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/get-started-with-azure-cli)
 
 Note that I'm doing this on a Windows machine using WSL2 and Visual Studio Code. All applications and tools are available cross-platform.
 
