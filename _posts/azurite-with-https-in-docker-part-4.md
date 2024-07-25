@@ -92,9 +92,130 @@ Navigate to the exposed port (e.g. http://localhost:56659/) and verify you see t
 
 Now let's try the `/blob` endpoint. When we open that endpoint, we can see (a lot) of errors in our Docker logs. If we scroll through those errors we see something like this:
 
-<!-- TODO ERROR -->
+```
+CredentialUnavailableException: DefaultAzureCredential failed to retrieve a token from the included credentials. See the troubleshooting guide for more information. https://aka.ms/azsdk/net/identity/defaultazurecredential/troubleshoot
+- EnvironmentCredential authentication unavailable. Environment variables are not fully configured. See the troubleshooting guide for more information. https://aka.ms/azsdk/net/identity/environmentcredential/troubleshoot
+- WorkloadIdentityCredential authentication unavailable. The workload options are not fully configured. See the troubleshooting guide for more information. https://aka.ms/azsdk/net/identity/workloadidentitycredential/troubleshoot
+- ManagedIdentityCredential authentication unavailable. No response received from the managed identity endpoint.
+- Visual Studio Token provider can't be accessed at /root/.IdentityService/AzureServiceAuth/tokenprovider.json
+- Azure CLI not installed
+- PowerShell is not installed.
+- Azure Developer CLI could not be found.
+```
 
-Our certificate is getting rejected by the container. That's because the container does not trust the previously generated `azurite.pem` certificate.
+Our `DefaultAzureCredential` can't find a way to authenticate the container with Azure.
+
+## Connecting our container to Azure
+
+As described in [Part 3](), due to the nature of the `DefaultAzureCredential` mechanism, we will need a way to authenticate to Azure. There are several ways to do so (you can view the diagram in part 3).
+
+The easiest way to do so through our Docker container is by setting environment variables.
+
+There are several environment variables that can be set in order to authenticate to Azure.
+
+For our purposes, the easiest way is by creating a service principal in Microsoft Entra ID by running the following command: `az ad sp create-for-rbac -n azurite-demo`
+
+Your should receive output similar to:
+
+```json
+{
+  "appId": "app-id-guid",
+  "displayName": "azurite-demo",
+  "password": "generated-password",
+  "tenant": "tenant-id-guid"
+}
+```
+
+Let's create a new file in our project root `~/azurite-demo` called `azure.env`. Run `touch azure.env`.
+
+> If you're using a version control system, make sure you do not commit this file. Never share this environment file with someone else as it can hold sensitive information.
+
+Open up the file in your favorite editor and add the following code:
+
+```
+AZURE_TENANT_ID=tenant-id-guid
+AZURE_CLIENT_ID=app-id-guid
+AZURE_CLIENT_SECRET=generated-password
+```
+
+Replace `tenant-id-guid` with your Tenant ID, `app-id-guid` with your App ID and `generated-password` with your password.
+
+> Note that `appId` in the JSON output is also referred to as the `Client ID` and the `password` is also called the `Client secret`.
+
+For more information on the available environment variables and the options to configure the `DefaultAzureCredential` mechanism, view [Microsoft's documentation on the matter](https://github.com/Azure/azure-sdk-for-go/wiki/Set-up-Your-Environment-for-Authentication#configure--defaultazurecredential).
+
+## Updating the Compose file
+
+Now that we've got our file with a way to authenticate to Azure, let's update our Compose file to actually use this.
+
+In our Compose file (`~/azurite-demo/compose.yaml`), at our `demo-app` service, let's add the following:
+
+```yml
+env_file:
+  - azure.env
+```
+
+Resulting in the entire `demo-app` service to look something like this:
+
+```yml
+demo_app:
+  container_name: demo-app
+  build:
+    context: .
+    dockerfile: Dockerfile
+  env_file:
+    - azure.env
+  ports:
+    - 8080
+```
+
+Be sure to run `docker compose up -d` to let the environment variables take effect.
+
+Let's try to run it! Go to the `/blob` endpoint of the Docker container. Again we'l see a lot of errors in our container logs...
+
+If we scroll through the errors, eventually we come across this:
+
+```
+info: Azure.Core[18]
+      Request [4976c2d9-39e7-43a2-8893-4d2d22cc2201] exception Azure.RequestFailedException: Connection refused (127.0.0.1:10000)
+       ---> System.Net.Http.HttpRequestException: Connection refused (127.0.0.1:10000)
+       ---> System.Net.Sockets.SocketException (111): Connection refused
+```
+
+## Updating our service URL
+
+Due to how Docker's networking is set up we can't connect to our Azurite Docker container by this IP address: `127.0.0.1`. From the container's point of view this would be their own loopback address. Not the place where Azurite is running.
+
+The easiest way to fix this is to communicate with our Docker container using the container name. Docker automatically supports communication between containers by their name.
+
+Let's change our service URL. Go to our `Program.cs` class in `~/azurite-demo/demo-app`. Instead of `127.0.0.1`, we will use our Azurite's container name: `azurite`.
+
+Change your service URL to reflect this, like so:
+
+```csharp
+builder.Services.AddAzureClients(clientBuilder =>
+{
+  clientBuilder.AddBlobServiceClient(new Uri("https://azurite:10000/devstoreaccount1"));
+  clientBuilder.UseCredential(new DefaultAzureCredential());
+});
+```
+
+Alright! Let's update our docker container by running `docker compose up -d --build` (we'll use the `--build` flag to force our container to use a new image version).
+
+Now we can navigate to our `/blob` endpoint. Let's see what happens...
+
+We're getting exceptions _again_. Will this never end? Don't worry though, it will.
+
+If we take a look at our container logs, we can find an error like:
+
+```
+info: Azure.Core[18]
+      Request [191b66b6-14be-44c0-b37a-9c9216a43e49] exception Azure.RequestFailedException: The SSL connection could not be established, see inner exception.
+       ---> System.Net.Http.HttpRequestException: The SSL connection could not be established, see inner exception.
+       ---> System.Security.Authentication.AuthenticationException: The remote certificate is invalid because of errors in the certificate chain: PartialChain
+```
+
+This happens because our container does not trust the Azurite certificate. This certificate is self-signed after all and does not come from a trusted source.
 
 ## Updating the Dockerfile to support our certificate
 
@@ -114,5 +235,3 @@ RUN update-ca-certificates
 ```
 
 This should seem familiar to you, we've used the same approach on our own WSL2 system in [Part 3]() of this series.
-
-
