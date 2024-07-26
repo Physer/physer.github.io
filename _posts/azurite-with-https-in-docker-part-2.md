@@ -87,7 +87,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Azure;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddAzureClients(clientBuilder => clientBuilder.AddBlobServiceClient("DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"));
+builder.Services.AddAzureClients(clientBuilder =>
+{
+    clientBuilder.AddBlobServiceClient("DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;");
+});
 var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
@@ -97,7 +100,9 @@ app.Run();
 
 Let's quickly add some code so we can interact with a blob. We'll create an endpoint that returns the first Blob it can find.
 
-We'll create a separate endpoint named `/blob` that simply returns the item if it can be found in a HTTP 200 OK result, or a 204 No Content result in case there's no item.
+We'll create a separate endpoint named `/blob` that simply returns the item if it can be found in a HTTP 200 OK result, or an HTTP 200 OK status with a simple message.
+
+> Please let's not have a discussion about the proper use of 200 OKs here 😉
 
 Since we've wired up the `BlobServiceClient` through dependency injection, we can inject it into our endpoint. Our endpoint will create a container called `demo` if it does not exist and grab the first item in that container. It will then be returned as a JSON object to the client.
 
@@ -112,7 +117,7 @@ app.MapGet("/blob", ([FromServices] BlobServiceClient blobServiceClient) =>
   blobContainerClient.CreateIfNotExists();
 
   var blob = blobContainerClient.GetBlobs()?.FirstOrDefault();
-  return blob is null ? Results.NoContent() : Results.Ok(blob);
+  return blob is null ? Results.Ok("No blob item available") : Results.Ok(blob);
 });
 ```
 
