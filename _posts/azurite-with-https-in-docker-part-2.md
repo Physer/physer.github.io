@@ -13,7 +13,7 @@ If you haven't read part 1, you can do so [here]().
 
 In this part of the blog series, we'll focus on setting up an example application using the Azure Storage SDKs to communicate with Azure (or Azurite in this case). Our example application will be a very simple application, returning the first available file in a Blob Container.
 
-In this post I'll be using .NET 8 and C# to communicate with Azure. The principles are the same when using Python, JavaScript or any other language, as long as you're using the Azure Storage Client Libraries.
+In this post I'll be using .NET 8 and C# to communicate with Azure. The principles are the same when using Python, JavaScript or any other language, as long as you're using the [Azure Storage Client Libraries](https://learn.microsoft.com/en-us/azure/storage/common/storage-introduction#storage-apis-libraries-and-tools).
 
 ## Setting up an example project
 

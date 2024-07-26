@@ -3,7 +3,15 @@
     "cSpell.words": [
         "appsettings",
         "aspnet",
+        "devstoreaccount",
         "Entra",
+        "tokenprovider",
         "WORKDIR"
+    ],
+    "cSpell.ignoreWords": [
+        "Bekso",
+        "CDXJ",
+        "SZFPT",
+        "arsr"
     ]
 }
