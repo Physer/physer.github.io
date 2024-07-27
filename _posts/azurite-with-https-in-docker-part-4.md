@@ -182,11 +182,29 @@ info: Azure.Core[18]
        ---> System.Net.Sockets.SocketException (111): Connection refused
 ```
 
-## Updating our service URL
+## Regenerating our self-signed certificate
 
-Due to how Docker's networking is set up we can't connect to our Azurite Docker container by this IP address: `127.0.0.1`. From the container's point of view this would be their own loopback address. Not the place where Azurite is running.
+In [Part 3]() of this blog series, we have created a self-signed TLS certificate for our Azurite container so our machine could securely communicate with it. When we generated that certificate, we've done so for the IP address `127.0.0.1`. Due to how Docker's networking is set up we can't connect to our Azurite Docker container by this IP address: `127.0.0.1`. From the container's point of view this would be their own loopback address. Not the place where Azurite is running.
 
 The easiest way to fix this is to communicate with our Docker container using the container name. Docker automatically supports communication between containers by their name.
+
+Before we update our code, we will create a new self-signed certificate for our container. We can remove our previously generated certificates from our `~/azurite-demo/certs` folder by running `rm ~/azurite-demo/certs/*.pem`. Now we'll create a new self-signed certificate by running `mkcert 127.0.0.1 localhost azurite`. This generates a certificate valid for the IP address `127.0.0.1` and the DNS names `azurite` and `localhost`.
+
+Indeed, if we inspect the generated certificate you'll see something along these lines:
+
+```json
+{
+  ... // removed for brevity
+  "extensions": {
+        "keyUsage": "Digital Signature, Key Encipherment",
+        "extendedKeyUsage": "TLS Web Server Authentication",
+        "authorityKeyIdentifier": "keyid:DA:35:01:28:59:4F:29:AC:90:D5:EA:BE:8B:F2:54:47:7A:EA:E6:7A\n",
+        "subjectAltName": "DNS:localhost, DNS:azurite, IP Address:127.0.0.1"
+    }
+}
+```
+
+> Don't forget to trust the certificates by copying it to your `ca-certificates` folder and running `update-ca-certificates` if you want to use it on your machine. See [Part 3]() for more details.
 
 Let's change our service URL. Go to our `Program.cs` class in `~/azurite-demo/demo-app`. Instead of `127.0.0.1`, we will use our Azurite's container name: `azurite`.
 
@@ -199,6 +217,8 @@ builder.Services.AddAzureClients(clientBuilder =>
   clientBuilder.UseCredential(new DefaultAzureCredential());
 });
 ```
+
+For simplicity, let's rename our certificates files to `127.0.0.1.pem` and `127.0.0.1-key.pem`.
 
 Alright! Let's update our docker container by running `docker compose up -d --build` (we'll use the `--build` flag to force our container to use a new image version).
 
@@ -229,8 +249,8 @@ We can copy our generated certificate into our image and tell Linux to trust it.
 
 ```Dockerfile
 WORKDIR /certs
-COPY ./certs/azurite.pem .
-RUN cp azurite.pem /usr/local/share/ca-certificates/azurite.crt
+COPY ./certs/127.0.0.1.pem .
+RUN cp 127.0.0.1.pem /usr/local/share/ca-certificates/127.0.0.1.crt
 RUN update-ca-certificates
 ```
 
