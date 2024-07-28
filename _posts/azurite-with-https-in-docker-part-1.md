@@ -25,6 +25,15 @@ In this blog series, we'll cover how to set up Azurite in Docker, using HTTPS an
 
 The first part of this blog series will focus on setting up our environment. We'll set up Azurite in Docker and set up the Azure Storage Explorer.
 
+Read the other parts here:
+
+- [Part 2 - ]()
+- [Part 3 - ]()
+- [Part 4 - ]()
+- [Part 5 - ]()
+
+Note that if you're not planning on containerizing your application and/or deploying to Azure you can stop after [Part 3]().
+
 ## Prerequisites
 
 If you want to follow along with this blog series, you will need the following software and services:
@@ -32,7 +41,7 @@ If you want to follow along with this blog series, you will need the following s
 - [Docker](https://www.docker.com/products/docker-desktop/)
 - [Docker Compose](https://docs.docker.com/compose/)
 - [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
-- [mkcert](https://github.com/FiloSottile/mkcert)
+- OpenSSL ([Windows binaries](https://slproweb.com/products/Win32OpenSSL.html)/Linux distributions are usually built-in)
 - [Azure Storage Explorer](https://azure.microsoft.com/en-us/products/storage/storage-explorer)
 - [An Azure account](https://azure.microsoft.com/en-us/free)
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/get-started-with-azure-cli)

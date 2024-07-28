@@ -12,7 +12,12 @@
         "Bekso",
         "CDXJ",
         "SZFPT",
+        "addext",
+        "addstore",
         "arsr",
-        "keyid"
+        "certutil",
+        "keyid",
+        "keyout",
+        "newkey"
     ]
 }

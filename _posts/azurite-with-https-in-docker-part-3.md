@@ -98,16 +98,18 @@ There are two steps we need to take in order to let Azurite play nice with the `
 
 [Microsoft's excellent documentation on Github](https://github.com/Azure/Azurite/blob/main/README.md#https-setup) shows how to generate a self-signed certificate for this purpose. Let's follow along.
 
-Since I'm on WSL2 (Ubuntu), I'm going to use [mkcert](https://github.com/FiloSottile/mkcert) for generating my certificate. You can use anything else if you wish. OpenSSL is also covered by Microsoft's instructions.
+Since I'm on WSL2 (Ubuntu), I'm going to use [OpenSSL](https://docs.openssl.org/master/man1/openssl-cmds/) for generating my certificate. You can use anything else if you wish. `mkcert` is also covered by Microsoft's instructions.
 
-The next steps assume you've installed `mkcert` and trusted the local Certificate Authority (by running `mkcert -install`).
+> In Microsoft's documentation they'll refer to `mkcert`. This is fine as long as you're on a host machine where you can easily trust the root certificate authority. `mkcert` only generates leaf certificates. If we intend to trust our certificate in a containerized application later on, it will be quite cumbersome to do so. Hence my choice of `OpenSSL`.
 
-In our project's root directory (`~/azure-demo`), let's create a folder called `certs` and generate a certificate for our Azurite endpoint. With `mkcert` we can use the following command: `mkcert 127.0.0.1`.
+The next steps assume you've installed and/or can interact with `openssl`.
+
+In our project's root directory (`~/azure-demo`), let's create a folder called `certs` and generate a certificate for our Azurite endpoint. With `openssl` we can use the following command: `openssl req -newkey rsa:2048 -x509 -nodes -keyout key.pem -new -out cert.pem -sha256 -days 365 -addext "subjectAltName=IP:127.0.0.1" -subj "/C=CO/ST=ST/L=LO/O=OR/OU=OU/CN=CN"`.
 
 This will give us two files:
 
-- 127.0.0.1.pem
-- 127.0.0.1-key.pem
+- cert.pem
+- key.pem
 
 Now we can use these files in our Docker Compose file for Azurite to use.
 
@@ -137,9 +139,9 @@ services:
         "--tableHost",
         "0.0.0.0",
         "--cert",
-        "/certs/127.0.0.1.pem",
+        "/certs/cert.pem",
         "--key",
-        "/certs/127.0.0.1-key.pem",
+        "/certs/key.pem",
         "--oauth",
         "basic",
       ]
@@ -172,18 +174,18 @@ Open the `Program.cs` file and change the protocol of the storage URL to `https`
 clientBuilder.AddBlobServiceClient(new Uri("https://127.0.0.1:10000/devstoreaccount1"));
 ```
 
-Keep in mind that if you're trying to interact with the TLS certificate on _your_ machine you'll need to trust the certificate. Please refer to [Microsoft's documentation](https://github.com/Azure/Azurite/blob/main/README.md#https-setup) for more details. If you're executing the Azure Storage Explorer on a different machine than you've trusted the `mkcert` Certificate Authority, you'll need to trust the _same_ Certificate Authority on both machines. For more information on how to transfer Certificate Authorities, refer to the [mkcert documentation](https://github.com/FiloSottile/mkcert).
-
-You can trust the self-signed newly created Azurite certificate on WSL2/Linux by following these steps:
+Keep in mind that if you're trying to interact with the TLS certificate on _your_ machine you'll need to trust the certificate. You can trust the self-signed newly created Azurite certificate on WSL2/Linux by following these steps:
 
 ```sh
-sudo cp ~/azurite-demo/certs/azurite.pem /usr/local/share/ca-certificates/azurite.crt
+sudo cp ~/azurite-demo/certs/cert.pem /usr/local/share/ca-certificates/cert.crt
 sudo update-ca-certificates
 ```
 
 > On Linux, the file extension of the certificate located in the `ca-certificates` directory has to be `.crt`.
 
-Personally I'm using the Azure Storage Explorer on Windows, whilst all the other things live in WSL2. In this case I copy over my `mkcert` Certificate Authority files, as well as my self-signed `127.0.0.1.pem` file. I then trust these on my Windows machine.
+Please refer to [Microsoft's documentation](https://github.com/Azure/Azurite/blob/main/README.md#https-setup) for more details.
+
+Personally I'm using the Azure Storage Explorer on Windows, whilst all the other things live in WSL2. In this case I copy over self-signed `cert.pem` file. I then trust it on my Windows machine by running `certutil –addstore -enterprise –f "Root" cert.pem`.
 
 Before we test our .NET application, let's go to the Azure Storage Explorer.
 
@@ -239,8 +241,10 @@ You should see valid output returned by an HTTP 200 OK status code, similar to:
 
 Very nice! You've made it this far.
 
-We can now let our .NET application connect to Azurite running in Docker using HTTPS with a self-signed certificated created by us. Additionally, we're capable of interacting with the Azurite container from our host machine through the sharing of the Certificate Authority and the self-signed certificate.
+We can now let our .NET application connect to Azurite running in Docker using HTTPS with a self-signed certificated created by us. Additionally, we're capable of interacting with the Azurite container from our host machine through the sharing of the self-signed certificate.
 
-In the next part we are going to containerize our .NET application. Since we're no longer running the .NET application from a host, we will also make sure we can trust our self-signed certificate in our Docker container.
+In the next part we are going to containerize our .NET application. Since we're no longer running the .NET application from a host, we will also make sure we can trust our self-signed certificate in our Docker container. If you have no intentions of containerizing your application for development purposes and do not want to follow along with our deployment to Azure, you can stop reading here.
+
+Though of course the fun _really_ only starts from part 4 onwards! 😉
 
 Continue to part 4 here: []().
