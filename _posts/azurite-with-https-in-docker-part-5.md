@@ -13,8 +13,6 @@ In the previous parts we've assembled all the puzzle pieces necessary for commun
 
 In this part we will optimize our Dockerfile and code so this only becomes relevant for our development cycle, not our other environments.
 
-We will also take a look at not making our applications dependent on the generating of the certificate on the host machine but rather from the application itself.
-
 ## Using environment variables
 
 Let's start with moving our hard-coded service URL in our `~/azurite-demo/demo-app/Program.cs` file to the `appsettings.json` file.
@@ -88,46 +86,57 @@ Let's run our applications: `docker compose up -d --build` and let's navigate to
 
 > Keep in mind that we have not set up a persisted location for our Azurite blobs, so if your Azurite container has been deleted your blob container will be empty, required you to re-upload an item to the container before you see results.
 
-## Generating our certificate from the other side
+## Setting up data persistence for our Azurite container
 
-As mentioned in the end of [part 4](), one of the problems we have now is that our host machine is responsible for generating the certificates.
+If you've followed along, perhaps you've noticed that sometimes there weren't any blobs at all in the container anymore due to the container being restarted, deleted or otherwise inconvenienced. Obviously this is quite annoying, so let's set up a persistent location for Azurite. There are two approaches to persisting data for Docker containers. One of them is a _volume_ while the other is a _bind mount_. You can read more about these two mechanisms in [Docker's documentation](https://docs.docker.com/guides/docker-concepts/running-containers/sharing-local-files/).
 
-Let's fix that by moving our certificate generation to our Dockerfile (`~/azurite-demo/Dockerfile`).
+For this scenario I'm going to choose a volume, since we won't be interacting _directly_ with the files in the Azure Storage, but rather through Azure Storage Explorer. Of course, if you do want to choose a bind mount, that's perfectly fine as well and will work just fine too.
 
-Instead of generating our certificates on our host machine and sharing them with our Docker containers, our .NET application will take care of the generation of the certificates.
+> We've used a bind mount for the certificate sharing in our Azurite and .NET application containers.
 
-Our entire Dockerfile now looks like this:
+Let's open up our Compose file (`~/azurite-demo/compose.yaml`) and at the bottom of the file add a new volume called `blobs` like so:
 
-```Dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
-WORKDIR /app
-
-COPY ./demo-app ./
-RUN dotnet restore
-RUN dotnet publish --no-restore -c Release -o /publish
-
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
-
-WORKDIR /certs
-RUN openssl req -newkey rsa:2048 -x509 -nodes -keyout ./key.pem -new -out ./cert.pem -sha256 -days 365 -addext "subjectAltName=IP:127.0.0.1,DNS:azurite" -subj "/C=CO/ST=ST/L=LO/O=OR/OU=OU/CN=CN"
-RUN cp cert.pem /usr/local/share/ca-certificates/cert.crt
-RUN update-ca-certificates
-
-WORKDIR /app
-COPY --from=build-env /publish .
-
-ENTRYPOINT ["dotnet", "demo-app.dll"]
+```yml
+volumes:
+  blobs:
 ```
 
-The line that previously copied over our certificate from our `~/azurite-demo/certs` folder is gone and instead is replaced by an `openssl` command. The very same command we used in [part 4]() to generate our certificate on our host machine.
+Next, we'll reference it in our Azurite service, below our previously created `./certs` bind mount:
 
-After our change to the Dockerfile, we will update our Compose file (`~/azurite-demo/compose.yaml`).
+```yml
+azurite:
+  container_name: azurite
+  image: mcr.microsoft.com/azure-storage/azurite
+  ports:
+    - 10000:10000
+    - 10001:10001
+    - 10002:10002
+  volumes:
+    - ./certs:/certs
+    - blobs:/blobs
+  command:
+    [
+      "azurite",
+      "--blobHost",
+      "0.0.0.0",
+      "--queueHost",
+      "0.0.0.0",
+      "--tableHost",
+      "0.0.0.0",
+      "--cert",
+      "/certs/cert.pem",
+      "--key",
+      "/certs/key.pem",
+      "--oauth",
+      "basic",
+      "--location",
+      "/blobs",
+    ]
+```
 
-Instead of a volume bind to our host, we will use a named volume to share data between the two containers.
+> Note that with a bind mount, you refer to the path on your host machine whereas with a volume you refer to the volume name.
 
-At the bottom of the Compose file we'll create a volume named `certificates`. Additionally we will mount the volume on both containers. To finish it off, we will make our Azurite container dependent on our .NET application since that's responsible for generating the certificates.
-
-All in all, our Compose file now looks like this:
+Your entire Compose file now looks like this:
 
 ```yml
 services:
@@ -139,7 +148,8 @@ services:
       - 10001:10001
       - 10002:10002
     volumes:
-      - certificates:/certs
+      - ./certs:/certs
+      - blobs:/blobs
     command:
       [
         "azurite",
@@ -155,9 +165,9 @@ services:
         "/certs/key.pem",
         "--oauth",
         "basic",
+        "--location",
+        "/blobs",
       ]
-    depends_on:
-      - demo_app
 
   demo_app:
     container_name: demo-app
@@ -169,29 +179,128 @@ services:
       - app.env
     ports:
       - 8080
-    volumes:
-      - certificates:/certs
 
 volumes:
-  certificates:
+  blobs:
 ```
 
-We can clean up our previously made `certs` folder by running `rm -r ~/azurite-demo/certs`.
+Run the Compose services by executing `docker compose up -d --build`, navigate to the `/blob` endpoint of your .NET container. Verify you get a Blob response back. If not, upload a blob through the Azure Storage Explorer (or any other way you see fit). You can now stop and delete the Azurite container (`docker rm -f azurite`), re-run it by running `docker compose up -d` and you'd still see the same blob in your Azure Storage Explorer or at your `/blob` endpoint.
 
-A small side note here about the Docker volume we've just created. This is a named volume that only exists in the context of Docker. You have no direct access to this volume by file system. In our case, we'd still want to access our `cert.pem` file on our host machine so we can interact with Azurite through the Azure Storage Container. In order to do so, we can inspect the volume using Docker Desktop and storing the `cert.pem` file from there. More information about this feature of Docker Desktop [can be found here](https://docs.docker.com/desktop/use-desktop/volumes/#inspect-a-volume). There are other ways to accomplish this as well. For instance, you might use a host bind or a volume with certain driver options for data persistence (e.g. NFS). You can see an example of the volume data through Docker Desktop here:
-![stored volume data in Docker Desktop](/assets/images/2024-07-23-azurite-with-https-in-docker/docker-desktop-volume-inspect.png)
-
-> Don't forget to import the newly created certificate in Azure Storage Explorer and trust it on the host machine with the `certutil` command! The certificate is now a different one than before, requiring us to re-import this.
-
-Let's run the applications by running `docker compose up -d --build`. Navigate to the `/blob` endpoint on your container's URL and verify you get a response.
-
-Awesome! We now have a working set-up of two containers talking to each other with a self-signed TLS certificate from the .NET application's Dockerfile.
-
-Although this works like a charm, our Dockerfile currently does this at all times. Even if we would deploy to a Cloud environment such as Production or a Staging environment. In that case we don't want to use Azurite and we certainly don't want to generate and trust a self-signed certificate. Of course it won't do any harm, but it's good practice to not do it when it's not required.
+You can also inspect the Docker volume (`docker volume inspect azurite-demo_blobs`) or use Docker Desktop to view the volume like so:
+![Docker Desktop volume inspect](/assets/images/2024-07-23-azurite-with-https-in-docker/docker-desktop-volume-inspect.png)
 
 ## Optimizing our Dockerfile
 
-In order to only generate and trust a self-signed certificate when we're developing we're going to make more use of [multi-stage magics](https://docs.docker.com/build/building/multi-stage/). More specifically, targeting certain stages.
+Currently when we build our .NET application with our Dockerfile, it will always trust the certificate we've generated and self-signed for development purposes. Whilst this won't hurt, it's not optimal to execute this in any other environment than development. _Especially_ when you're using the same Dockerfile for automated builds to other environments, for instance using automated deployment pipelines (e.g. GitHub Actions).
+
+We can use more [multi-stage magic](https://docs.docker.com/build/building/multi-stage/) to make this happen only in situations where we want it. More specifically, by using targets.
 
 Let's open up our Dockerfile (`~/azurite-demo/Dockerfile`).
 
+We're going to change the stages a bit. First of all we're going to add an alias to our second stage called `runtime`. To do so, add `AS runtime` after the second `FROM` statement:
+
+```Dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+```
+
+Next, we're going to make the `runtime` stage copy the files from the `build-env` stage to the `/app` directory. In other words, we'll grab the two lines we have below the `RUN update-ca-certificates` statement and paste them below the `runtime` stage:
+
+```Dockerfile
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+
+WORKDIR /app
+COPY --from=build-env /publish .
+```
+
+Now we have a `runtime` stage available which has the slimmed down version of the .NET runtime, rather than the entire SDK and our .NET application's published files available for reference.
+
+Below these lines, we'll create a new stage called `development`, based on the `runtime` stage like so:
+
+```Dockerfile
+FROM runtime AS development
+```
+
+This stage will do the certificate work we've set-up previously, as well as switching to the `/app` directory later on and setting the `ENTRYPOINT` statement. It no longer needs to copy the files from the `/publish` directory from the other stage as we're basing it off our `runtime` stage. Remove that code
+
+Your `development` stage should then look like this:
+
+```Dockerfile
+FROM runtime AS development
+
+WORKDIR /certs
+COPY ./certs/cert.pem .
+RUN cp cert.pem /usr/local/share/ca-certificates/cert.crt
+RUN update-ca-certificates
+
+WORKDIR /app
+ENTRYPOINT ["dotnet", "demo-app.dll"]
+```
+
+Finally, below the `ENTRYPOINT` of the `development` stage, we'll create a new unnamed stage also based off the `runtime` stage. This simply points to the `/app` directory and executes (the same) `ENTRYPOINT` statement as our `development` stage.
+
+```Dockerfile
+FROM runtime
+
+WORKDIR /app
+ENTRYPOINT ["dotnet", "demo-app.dll"]
+```
+
+Your entire Dockerfile now looks like:
+
+```Dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+WORKDIR /app
+
+COPY ./demo-app ./
+RUN dotnet restore
+RUN dotnet publish --no-restore -c Release -o /publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+
+WORKDIR /app
+COPY --from=build-env /publish .
+
+FROM runtime AS development
+
+WORKDIR /certs
+COPY ./certs/cert.pem .
+RUN cp cert.pem /usr/local/share/ca-certificates/cert.crt
+RUN update-ca-certificates
+
+WORKDIR /app
+ENTRYPOINT ["dotnet", "demo-app.dll"]
+
+FROM runtime
+
+WORKDIR /app
+ENTRYPOINT ["dotnet", "demo-app.dll"]
+```
+
+If we would now run our Compose services (`docker compose up -d --build`), you'll see it will no longer import and trust the self-signed certificate (causing an HTTP 500 error when navigating to the `/blob` endpoint, by the way).
+
+We can remedy this by updating our Compose file (`~/azurite-demo/compose.yaml`).
+
+At our `demo_app` service, in the `build` property we can add the `target` property and set this to `development` like so:
+
+```yml
+build:
+  context: .
+  dockerfile: Dockerfile
+  target: development
+```
+
+> If you intend to use the same Compose file for deployments or for other environments, it might be a good idea to move this target to an environment variable.
+
+If we run our Compose services now (`docker compose up -d --build`), everything works like it used to do.
+
+## Next
+
+Great! We now have an optimized Dockerfile with support from Compose to have the option to import and trust the self-signed certificate or not.
+
+We also have updated our code to let the Blob Service Client be registered based on an app setting rather than a hardcoded URL.
+
+In the next part we'll deploy a real storage account in Azure, upload a blob to it and deploy our .NET application to Azure and allow it to read the file using managed identities and the _same_ code as we've written all the way back in [part 3]()!
+
+If you want to clean up your local Docker files you can run `docker compose down --rmi all`. If you want to clean your entire Docker environment afterwards, you can run: `docker system prune -af && docker volume prune -af && docker builder prune -af`.
+
+Continue to [part 6 here]().

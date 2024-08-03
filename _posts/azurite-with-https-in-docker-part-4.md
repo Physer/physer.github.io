@@ -300,12 +300,6 @@ Alrighty then! Now we have both our application and Azurite running in container
 
 Great! This also allows you to use the certificate on your host machine to inspect the data in the Azurite container using the Azure Service bus Explorer.
 
-We're not quite there yet though. A couple of interesting points now arise:
-
-- Our Dockerfile will always expect these certificates to be present although they're only relevant for development
-- Our certificates are generated and maintained from our host machine making it difficult to share these
-- If we were to share our certificate, we have to commit both our certificate and key (which should be private at all times) to source control
-
-In the next part we'll tidy up and optimize our Dockerfile as well as our code to use environment variables for the Azurite URL.
+However, currently our Dockerfile always uses the certificates which is useless for an environment other than development. In the next part we'll tidy up and optimize our Dockerfile as well as our code to use environment variables for the Azurite URL.
 
 Continue to [part 5 here]().
