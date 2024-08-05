@@ -299,7 +299,7 @@ Great! We now have an optimized Dockerfile with support from Compose to have the
 
 We also have updated our code to let the Blob Service Client be registered based on an app setting rather than a hardcoded URL.
 
-In the next part we'll deploy a real storage account in Azure, upload a blob to it and deploy our .NET application to Azure and allow it to read the file using managed identities and the _same_ code as we've written all the way back in [part 3]()!
+In the next part we'll deploy a real storage account in Azure, upload a blob to it and deploy our .NET application to Azure and allow it to read the file using managed identities and the _same_ code as we've written all the way back in [part 3]() - excluding the environment variables, but that was a minor change 😉!
 
 If you want to clean up your local Docker files you can run `docker compose down --rmi all`. If you want to clean your entire Docker environment afterwards, you can run: `docker system prune -af && docker volume prune -af && docker builder prune -af`.
 

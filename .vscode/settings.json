@@ -8,7 +8,10 @@
         "devstoreaccount",
         "Entra",
         "separater",
+        "serverfarms",
+        "stazurite",
         "tokenprovider",
+        "westeurope",
         "WORKDIR"
     ],
     "cSpell.ignoreWords": [
@@ -19,6 +22,7 @@
         "addstore",
         "arsr",
         "certutil",
+        "hnqgto",
         "keyid",
         "keyout",
         "newkey"
