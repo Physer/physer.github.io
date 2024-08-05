@@ -67,6 +67,7 @@ resource demoApp 'Microsoft.Web/sites@2023-12-01' = {
     serverFarmId: demoAppPlan.id
     httpsOnly: true
     siteConfig: {
+      linuxFxVersion: 'DOTNETCORE|8.0'
       appSettings: [
         {
           name: 'Storage__ServiceUri'
@@ -78,9 +79,9 @@ resource demoApp 'Microsoft.Web/sites@2023-12-01' = {
 }
 ```
 
-I'm choosing a Linux app service plan on the B1 SKU. The web app itself will have a system-assigned identity enabled and our Blob endpoint set to the value of the `Storage__ServiceUri` environment variable. Note that if you wish to create a Linux app service plan, it's important that you set both the `kind` value to `linux` as well as the `reserved` property to `true`.
+I'm choosing a Linux app service plan on the B1 SKU. The web app itself will have a system-assigned identity enabled and our Blob endpoint set to the value of the `Storage__ServiceUri` environment variable. Note that if you wish to create a Linux app service plan, it's important that you set both the `kind` value to `linux` as well as the `reserved` property to `true`. Additionally, make sure you set [the `linuxFxVersion` property](https://learn.microsoft.com/en-us/azure/app-service/quickstart-arm-template?pivots=platform-linux#review-the-template) to the stack version you're currently working on. For our .NET application, that's .NET 8 (written as `DOTNETCORE|8.0`).
 
-Once we have our Storage Account and our App Service with a system-assigned managed identity, we can assign a reader role on the Blob storage for our identity:
+Once we have our Storage Account and our App Service with a system-assigned managed identity, we can assign a contributor role on the Blob storage for our identity. You can find a list of built-in role definitions over at [Microsoft's documentation](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles).
 
 ```Bicep
 resource storageAccountDataReaderDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
@@ -99,6 +100,10 @@ resource appServiceRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-
 }
 ```
 
+For more information about these Bicep declarations, see [Microsoft's Bicep reference](https://learn.microsoft.com/en-us/azure/templates/).
+
+> Of course you don't have to use Bicep. You can use the AZ CLI, as well as the Portal or any other method you prefer!
+
 ## Deploying the .NET application
 
 Now that we have all our resources in place, let's deploy our application to Azure. In this scenario I'll be using the `dotnet` CLI to publish the application to my local file system after which I'll be using the [ZIP deploy](https://learn.microsoft.com/en-us/azure/app-service/deploy-zip?tabs=cli#create-a-project-zip-package) functionality to upload it to the Azure App Service. If you wish to use a different way of deploying your application, e.g. through Visual Studio, that will work just as well.
@@ -109,6 +114,47 @@ Navigate to the newly created `publish` folder (`~/azurite-demo/demo-app/publish
 
 > You might need to install `zip` on your machine (`sudo apt install zip -y`).
 
-Once all the published files are zipped, we can use the Azure CLI to deploy our application to our previously created Azure App Service: `az webapp deploy --resource-group rg-azurite --name app-demo-app-mf53zb5hnqgto --src-path ./demo-app.zip`. Be sure to replace the name of the web app with the name of your web app.
+Once all the published files are zipped, we can use the Azure CLI to deploy our application to our previously created Azure App Service: `az webapp deploy --resource-group rg-azurite --name app-demo-app-mf53zb5hnqgto --src-path ./demo-app.zip --type zip`. Be sure to replace the name of the web app with the name of your web app.
 
-> If you want to retrieve the name of your web app, you can run the following command: `az resource list --resource-group rg-azurite --resource-type Microsoft.Web/sites --query [0].name`
+> If you want to retrieve the name of your web app, you can run the following command: `az resource list --resource-group rg-azurite --resource-type Microsoft.Web/sites --query [0].name`.
+
+Wait for the command to complete and head over to your newly deployed Azure app service! You can find the URL for you app service by running this command: `az webapp show --resource-group rg-azurite --name app-demo-app-mf53zb5hnqgto --query defaultHostName`.
+
+> Replace the name of App Service with your app's name.
+
+You should see the `Hello World!` output from the default endpoint. Navigate to the `/blob` endpoint. Since this is the first time we're looking at this endpoint, it will create the Blob container for us and show `No blob item available`:
+![successful call to Azure Blob Storage with managed identity](/assets/images/2024-07-23-azurite-with-https-in-docker/azure-managed-identity-connection.png)
+
+If you want you can upload an item to the Blob container using any of the preferred methods. I'll be using the Azure Storage Explorer built-in to the Azure Portal.
+![Azure Portal's Storage Browser](/assets/images/2024-07-23-azurite-with-https-in-docker/azure-portal-storage-browser.png)
+
+After uploading an item and upon refreshing the `/blob` endpoint, you'll see data regarding the uploaded blob!
+![Successful Azure managed identity call with Blob data](/assets/images/2024-07-23-azurite-with-https-in-docker/azure-successful-blob-data.png)
+
+## Result and recap
+
+And there you have it!
+
+We have a working version of a .NET application interacting with Azure Storage services. Whether that's emulated through Azurite or on a real Azure Storage Account.
+
+We have accomplished this by running Azurite in Docker, generating a self-signed certificate, trusting said certificate and leveraging Azure's `DefaultAzureCredential` mechanism. After the application was working in our containerized Azurite environment, we've set up the infrastructure required for an Azure Blob Storage service in the cloud as well as a place to host our .NET demo application. By using managed identities, we are able to communicate with our Azure Storage Account without storing any kind of credentials in our code. We no longer have to think about key rotation, security comprises or any other kind of password security issue.
+
+We have followed these steps:
+
+1. Set up Azurite in Docker
+2. Set up a small .NET application capable of interacting with the blobs using the Azure SDKs
+3. Using the `DefaultAzureCredential` mechanism to authenticate to Azure services
+4. Changing Azurite to support HTTPS
+5. Containerizing our .NET application
+6. Optimizing our containerization process and make use of environment variables
+7. Setting up, deploying to and interacting with an actual Azure Storage Account in the cloud
+
+## Finishing up
+
+I hope you have enjoyed our journey through Azure's wondrous worlds of SDKs, authentication and managed identities. Thank you for taking the time to read my blog posts and I hope it will help you out on your cloud endeavors!
+
+As with all my blog posts, the full code is available in the repository of this site: [physer.github.io]().
+
+Thank you and I'll see you in the next one!
+
+## References
