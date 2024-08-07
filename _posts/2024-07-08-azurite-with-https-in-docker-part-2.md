@@ -1,8 +1,8 @@
 ---
-# layout: post
-# title: "Azurite, HTTPS, Azure Storage SDKs, Azure Storage Explorer and Docker - Part 2"
-# date: 2023-07-23 11:40 +0200
-# categories: azure
+layout: post
+title: "Let's build an Azure Storage solution using Azurite, self-signed certificates, Docker, .NET and Azure - Part 2"
+date: 2024-08-07 15:00 +0200
+categories: azure
 ---
 
 ## Introduction
@@ -38,7 +38,7 @@ info: Microsoft.Hosting.Lifetime[0]
 ```
 
 Verify the application is up and running on the specified URL. In the case of the example, if we navigate to http://localhost:5004, we'll see `Hello World!`:
-![empty dotnet application](/assets/images/2024-07-23-azurite-with-https-in-docker/empty-dotnet-application.png)
+![empty dotnet application](/assets/images/2024-08-07-azurite-with-https-in-docker/empty-dotnet-application.png)
 
 > Note that our application currently doesn't run using HTTPS. If you wish to do so, feel free but the focus of this blog series is communicating with Azurite through HTTPS, regardless of what the application itself is exposed through.
 
@@ -82,14 +82,12 @@ The connection data for Azurite can be found in [Microsoft's documentation](http
 Your entire `Program.cs` class should now look something along these lines:
 
 ```csharp
-using Azure.Storage.Blobs;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Azure;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAzureClients(clientBuilder =>
 {
-    clientBuilder.AddBlobServiceClient("DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;");
+  clientBuilder.AddBlobServiceClient("DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;");
 });
 var app = builder.Build();
 
@@ -127,7 +125,7 @@ If I now call this newly created endpoint, I get my blob data served back:
 
 ```sh
 curl http://localhost:5004/blob
-{"name":"azure.png","deleted":false,"snapshot":null,"versionId":null,"isLatestVersion":null,"properties":{"lastModified":"2024-07-23T11:55:54+00:00","contentLength":170479,"contentType":"image/png","contentEncoding":null,"contentLanguage":null,"contentHash":"x+qc8arsrSVHp7muQG64tA==","contentDisposition":null,"cacheControl":null,"blobSequenceNumber":null,"blobType":0,"leaseStatus":1,"leaseState":0,"leaseDuration":null,"copyId":null,"copyStatus":null,"copySource":null,"copyProgress":null,"copyStatusDescription":null,"serverEncrypted":true,"incrementalCopy":null,"destinationSnapshot":null,"remainingRetentionDays":null,"accessTier":{},"accessTierInferred":true,"archiveStatus":null,"customerProvidedKeySha256":null,"encryptionScope":null,"tagCount":null,"expiresOn":null,"isSealed":null,"rehydratePriority":null,"lastAccessedOn":null,"eTag":"\"0x1DADFD25E7ADE40\"","createdOn":"2024-07-23T11:55:54+00:00","copyCompletedOn":null,"deletedOn":null,"accessTierChangedOn":"2024-07-23T11:55:54+00:00","immutabilityPolicy":{"expiresOn":null,"policyMode":null},"hasLegalHold":false},"metadata":{},"tags":null,"objectReplicationSourceProperties":null,"hasVersionsOnly":null}
+{"name":"azure.png","deleted":false,"snapshot":null,"versionId":null,"isLatestVersion":null,"properties":{"lastModified":"2024-08-07T11:55:54+00:00","contentLength":170479,"contentType":"image/png","contentEncoding":null,"contentLanguage":null,"contentHash":"x+qc8arsrSVHp7muQG64tA==","contentDisposition":null,"cacheControl":null,"blobSequenceNumber":null,"blobType":0,"leaseStatus":1,"leaseState":0,"leaseDuration":null,"copyId":null,"copyStatus":null,"copySource":null,"copyProgress":null,"copyStatusDescription":null,"serverEncrypted":true,"incrementalCopy":null,"destinationSnapshot":null,"remainingRetentionDays":null,"accessTier":{},"accessTierInferred":true,"archiveStatus":null,"customerProvidedKeySha256":null,"encryptionScope":null,"tagCount":null,"expiresOn":null,"isSealed":null,"rehydratePriority":null,"lastAccessedOn":null,"eTag":"\"0x1DADFD25E7ADE40\"","createdOn":"2024-08-07T11:55:54+00:00","copyCompletedOn":null,"deletedOn":null,"accessTierChangedOn":"2024-08-07T11:55:54+00:00","immutabilityPolicy":{"expiresOn":null,"policyMode":null},"hasLegalHold":false},"metadata":{},"tags":null,"objectReplicationSourceProperties":null,"hasVersionsOnly":null}
 ```
 
 Or in a more readable format:
@@ -140,7 +138,7 @@ Or in a more readable format:
   "versionId": null,
   "isLatestVersion": null,
   "properties": {
-    "lastModified": "2024-07-23T11:55:54+00:00",
+    "lastModified": "2024-08-07T11:55:54+00:00",
     "contentLength": 170479,
     "contentType": "image/png",
     "contentEncoding": null,
@@ -173,10 +171,10 @@ Or in a more readable format:
     "rehydratePriority": null,
     "lastAccessedOn": null,
     "eTag": "\"0x1DADFD25E7ADE40\"",
-    "createdOn": "2024-07-23T11:55:54+00:00",
+    "createdOn": "2024-08-07T11:55:54+00:00",
     "copyCompletedOn": null,
     "deletedOn": null,
-    "accessTierChangedOn": "2024-07-23T11:55:54+00:00",
+    "accessTierChangedOn": "2024-08-07T11:55:54+00:00",
     "immutabilityPolicy": {
       "expiresOn": null,
       "policyMode": null
@@ -198,6 +196,8 @@ We've also seen how to wire up the Azure SDK with its `BlobServiceClient` throug
 
 However, there's a major flaw with this approach at the moment. We've directly entered the Azurite connection string into our `Program.cs` class. This connection string contains an account key. This account key should not be exposed.
 
-Sure, we could simply move this to a configuration file such as the `appsettings.json` files and let the application configuration take care of choosing a different connection string based on its environment, but then your appsettings or your environment where you'd deploy to later on would still need the connection string _somewhere_.
+Sure, we could simply move this to a configuration file such as the `appsettings.json` files and let the application configuration take care of choosing a different connection string based on its environment, but then your appsettings or your environment where you'd deploy to later on would still need the connection string _somewhere_. Not to mention you'd have to be in charge of rotation keys, which is always a pain in the, well, you know where.
 
 The next step will be to leverage the `DefaultAzureCredential` class from the `Azure.Identity` package to make our code agnostic of both the specific credentials required as well as the _type_ of credential being used. This means that we can use environment variables, interactive credentials or managed identities all with the same bit of code!
+
+Continue to [part 3 here]().

@@ -1,8 +1,8 @@
 ---
-# layout: post
-# title: "Azurite, HTTPS, Azure Storage SDKs, Azure Storage Explorer and Docker - Part 5"
-# date: 2023-07-23 11:40 +0200
-# categories: azure
+layout: post
+title: "Let's build an Azure Storage solution using Azurite, self-signed certificates, Docker, .NET and Azure - Part 5"
+date: 2024-08-07 15:00 +0200
+categories: azure
 ---
 
 ## Introduction
@@ -83,111 +83,6 @@ demo_app:
 ```
 
 Let's run our applications: `docker compose up -d --build` and let's navigate to the `/blob` endpoint of container's URL. You should see your blob item.
-
-> Keep in mind that we have not set up a persisted location for our Azurite blobs, so if your Azurite container has been deleted your blob container will be empty, required you to re-upload an item to the container before you see results.
-
-## Setting up data persistence for our Azurite container
-
-If you've followed along, perhaps you've noticed that sometimes there weren't any blobs at all in the container anymore due to the container being restarted, deleted or otherwise inconvenienced. Obviously this is quite annoying, so let's set up a persistent location for Azurite. There are two approaches to persisting data for Docker containers. One of them is a _volume_ while the other is a _bind mount_. You can read more about these two mechanisms in [Docker's documentation](https://docs.docker.com/guides/docker-concepts/running-containers/sharing-local-files/).
-
-For this scenario I'm going to choose a volume, since we won't be interacting _directly_ with the files in the Azure Storage, but rather through Azure Storage Explorer. Of course, if you do want to choose a bind mount, that's perfectly fine as well and will work just fine too.
-
-> We've used a bind mount for the certificate sharing in our Azurite and .NET application containers.
-
-Let's open up our Compose file (`~/azurite-demo/compose.yaml`) and at the bottom of the file add a new volume called `blobs` like so:
-
-```yml
-volumes:
-  blobs:
-```
-
-Next, we'll reference it in our Azurite service, below our previously created `./certs` bind mount:
-
-```yml
-azurite:
-  container_name: azurite
-  image: mcr.microsoft.com/azure-storage/azurite
-  ports:
-    - 10000:10000
-    - 10001:10001
-    - 10002:10002
-  volumes:
-    - ./certs:/certs
-    - blobs:/blobs
-  command:
-    [
-      "azurite",
-      "--blobHost",
-      "0.0.0.0",
-      "--queueHost",
-      "0.0.0.0",
-      "--tableHost",
-      "0.0.0.0",
-      "--cert",
-      "/certs/cert.pem",
-      "--key",
-      "/certs/key.pem",
-      "--oauth",
-      "basic",
-      "--location",
-      "/blobs",
-    ]
-```
-
-> Note that with a bind mount, you refer to the path on your host machine whereas with a volume you refer to the volume name.
-
-Your entire Compose file now looks like this:
-
-```yml
-services:
-  azurite:
-    container_name: azurite
-    image: mcr.microsoft.com/azure-storage/azurite
-    ports:
-      - 10000:10000
-      - 10001:10001
-      - 10002:10002
-    volumes:
-      - ./certs:/certs
-      - blobs:/blobs
-    command:
-      [
-        "azurite",
-        "--blobHost",
-        "0.0.0.0",
-        "--queueHost",
-        "0.0.0.0",
-        "--tableHost",
-        "0.0.0.0",
-        "--cert",
-        "/certs/cert.pem",
-        "--key",
-        "/certs/key.pem",
-        "--oauth",
-        "basic",
-        "--location",
-        "/blobs",
-      ]
-
-  demo_app:
-    container_name: demo-app
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - azure.env
-      - app.env
-    ports:
-      - 8080
-
-volumes:
-  blobs:
-```
-
-Run the Compose services by executing `docker compose up -d --build`, navigate to the `/blob` endpoint of your .NET container. Verify you get a Blob response back. If not, upload a blob through the Azure Storage Explorer (or any other way you see fit). You can now stop and delete the Azurite container (`docker rm -f azurite`), re-run it by running `docker compose up -d` and you'd still see the same blob in your Azure Storage Explorer or at your `/blob` endpoint.
-
-You can also inspect the Docker volume (`docker volume inspect azurite-demo_blobs`) or use Docker Desktop to view the volume like so:
-![Docker Desktop volume inspect](/assets/images/2024-07-23-azurite-with-https-in-docker/docker-desktop-volume-inspect.png)
 
 ## Optimizing our Dockerfile
 

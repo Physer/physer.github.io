@@ -1,8 +1,8 @@
 ---
-# layout: post
-# title: "Azurite, HTTPS, Azure Storage SDKs, Azure Storage Explorer and Docker - Part 1"
-# date: 2023-07-23 09:35 +0200
-# categories: azure
+layout: post
+title: "Let's build an Azure Storage solution using Azurite, self-signed certificates, Docker, .NET and Azure - Part 1"
+date: 2024-08-07 15:00 +0200
+categories: azure
 ---
 
 ## Introduction
@@ -27,12 +27,13 @@ The first part of this blog series will focus on setting up our environment. We'
 
 Read the other parts here:
 
-- [Part 2 - ]()
-- [Part 3 - ]()
-- [Part 4 - ]()
-- [Part 5 - ]()
+- [Part 2 - Setting up a sample .NET application for interacting with Azure Blobs]()
+- [Part 3 - Using the DefaultAzureCredential and configuring Azurite for HTTPS with a self-signed certificate]()
+- [Part 4 - Containerizing our application and communicating with the Azurite container]()
+- [Part 5 - Optimizing our application's Docker image and using environment variables]()
+- [Part 6 - Provisioning, deploying to and using real Azure components]()
 
-Note that if you're not planning on containerizing your application and/or deploying to Azure you can stop after [Part 3]().
+Part 1, 2 and 3 are mainly focussing on the technical aspect of integrating with Azurite on your machine, using a self-signed TLS certificate. On the other hand, part 4, 5 and 6 are focussed on deploying the same application to a real-world Azure environment. Either way, this series will allow you to connect to both Azurite and real-world Azure Storage Accounts without keeping any kind of security credential such as a connection string or key in your code or application settings/environment variables.
 
 ## Prerequisites
 
@@ -41,12 +42,12 @@ If you want to follow along with this blog series, you will need the following s
 - [Docker](https://www.docker.com/products/docker-desktop/)
 - [Docker Compose](https://docs.docker.com/compose/)
 - [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
-- OpenSSL ([Windows binaries](https://slproweb.com/products/Win32OpenSSL.html)/Linux distributions are usually built-in)
+- OpenSSL ([Windows binaries](https://slproweb.com/products/Win32OpenSSL.html)/Linux has package manager support if required)
 - [Azure Storage Explorer](https://azure.microsoft.com/en-us/products/storage/storage-explorer)
 - [An Azure account](https://azure.microsoft.com/en-us/free)
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/get-started-with-azure-cli)
 
-Note that I'm doing this on a Windows machine using WSL2 and Visual Studio Code. All applications and tools are available cross-platform.
+Note that I'm doing this on a Windows machine using WSL2 and Visual Studio Code. All applications and tools are available cross-platform. The code is available in my [Github repository]() as well.
 
 ## Setting up Azurite in Docker using Compose
 
@@ -90,6 +91,63 @@ Azurite Table service is successfully listening at http://0.0.0.0:10002
 
 We now have a very simple Azurite docker container running with [ephemeral storage](https://docs.docker.com/storage/) (meaning all data is removed once the container is removed).
 
+## Setting up data persistence for our Azurite container
+
+When the container gets restarted, deleted or otherwise inconvenienced, all our data disappears. Obviously this is quite annoying, so let's set up a persistent location for Azurite. There are two approaches to persisting data for Docker containers. One of them is a _volume_ while the other is a _bind mount_. You can read more about these two mechanisms in [Docker's documentation](https://docs.docker.com/guides/docker-concepts/running-containers/sharing-local-files/).
+
+For this scenario I'm going to choose a volume, since we won't be interacting _directly_ with the files in the Azure Storage, but rather through Azure Storage Explorer. Of course, if you do want to choose a bind mount, that's perfectly fine as well and will work just fine too.
+
+> Fun fact! We are going to use a bind mount for the certificate sharing in our Azurite and .NET application containers in [part 4]().
+
+Let's open up our Compose file (`~/azurite-demo/compose.yaml`) and at the bottom of the file add a new volume called `blobs` like so:
+
+```yml
+volumes:
+  blobs:
+```
+
+Next, we'll reference it in our Azurite service, below our ports definition:
+
+```yml
+services:
+  azurite:
+    container_name: azurite
+    image: mcr.microsoft.com/azure-storage/azurite
+    ports:
+      - 10000:10000
+      - 10001:10001
+      - 10002:10002
+    volumes:
+      - blobs:/data
+```
+
+Now your Compose file looks like:
+
+```yml
+services:
+  azurite:
+    container_name: azurite
+    image: mcr.microsoft.com/azure-storage/azurite
+    ports:
+      - 10000:10000
+      - 10001:10001
+      - 10002:10002
+    volumes:
+      - blobs:/data
+
+volumes:
+  blobs:
+```
+
+> If you do bind your volume to the `/data` path of the container, you need to specify the location in the startup command. More on the startup command will be covered in [part 3]().
+
+Run the Compose services by executing `docker compose up -d`. You can now stop and delete the Azurite container (`docker rm -f azurite`), re-run it by running `docker compose up -d` and you'd still see the same blob in your Azure Storage Explorer.
+
+You can also inspect the Docker volume (`docker volume inspect azurite-demo_blobs`) or use Docker Desktop to view the volume like so:
+![Docker Desktop volume inspect](/assets/images/2024-08-07-azurite-with-https-in-docker/docker-desktop-volume-inspect.png)
+
+> Don't panic if you don't see any content in your volume yet. Set up the Azure Storage Explorer and upload an item to a container as specified in the next paragraph. Afterwards, check out your volume.
+
 ## Setting up the Azure Storage Explorer
 
 Great! We've got Azurite up and running. However, currently we don't have an easy way to manage and view its data. Let's fix that!
@@ -97,7 +155,7 @@ Great! We've got Azurite up and running. However, currently we don't have an eas
 Grab the Azure Storage Explorer tool from [Microsoft's website](https://azure.microsoft.com/en-us/products/storage/storage-explorer). Download the version for your operating system and run it after installing.
 
 You should be greeted by a screen similar to this:
-![Azure Storage Explorer starting screen](/assets/images/2024-07-23-azurite-with-https-in-docker/azure-storage-explorer-welcome.png)
+![Azure Storage Explorer starting screen](/assets/images/2024-08-07-azurite-with-https-in-docker/azure-storage-explorer-welcome.png)
 
 Azure Storage Explorer has attached the Storage Emulator by default (whether that's the legacy Azure Storage Emulator, or Azurite).
 
@@ -110,10 +168,10 @@ Let's create a container to verify we can access Azurite properly. Right-click t
 
 Finally your Azure Storage Explorer could look something like this:
 
-![Azure Storage Explorer demo upload](/assets/images/2024-07-23-azurite-with-https-in-docker/azure-storage-explorer-demo-upload.png)
+![Azure Storage Explorer demo upload](/assets/images/2024-08-07-azurite-with-https-in-docker/azure-storage-explorer-demo-upload.png)
 
 ## Next up
 
 This concludes the first part of this blog series! Setting up Azurite and the Storage Explorer will give us a solid foundation for setting up our example application where we'll connect our Docker container to so we can actually interact with Azure Storage.
 
-Continue to part 2 here: []()
+Continue to [part 2 here]().

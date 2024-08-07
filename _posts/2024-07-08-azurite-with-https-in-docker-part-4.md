@@ -1,8 +1,8 @@
 ---
-# layout: post
-# title: "Azurite, HTTPS, Azure Storage SDKs, Azure Storage Explorer and Docker - Part 4"
-# date: 2023-07-23 11:40 +0200
-# categories: azure
+layout: post
+title: "Let's build an Azure Storage solution using Azurite, self-signed certificates, Docker, .NET and Azure - Part 4"
+date: 2024-08-07 15:00 +0200
+categories: azure
 ---
 
 ## Introduction
@@ -16,6 +16,8 @@ You can read the previous parts here:
 - [Part 1]()
 - [Part 2]()
 - [Part 3]()
+
+In this part of the series we will focus on containerizing our application and allowing communication between our Azurite container and our .NET application's container.
 
 ## Containerizing the application
 
@@ -88,7 +90,7 @@ This Compose service will start a container using our Dockerfile on a random ava
 Run `docker compose up -d` to run the container.
 
 Navigate to the exposed port (e.g. http://localhost:56659/) and verify you see the `Hello World!` output from the root endpoint:
-![containerized .NET application](/assets/images/2024-07-23-azurite-with-https-in-docker/containerized-hello-world.png)
+![containerized .NET application](/assets/images/2024-08-07-azurite-with-https-in-docker/containerized-hello-world.png)
 
 Now let's try the `/blob` endpoint. When we open that endpoint, we can see (a lot) of errors in our Docker logs. If we scroll through those errors we see something like this:
 
@@ -242,10 +244,12 @@ If we take a look at our container logs, we can find an error like:
 
 ```
 info: Azure.Core[18]
-      Request [191b66b6-14be-44c0-b37a-9c9216a43e49] exception Azure.RequestFailedException: The SSL connection could not be established, see inner exception.
+      Request [3eed15d1-0f09-42d3-b50e-aec55de2bcf1] exception Azure.RequestFailedException: The SSL connection could not be established, see inner exception.
        ---> System.Net.Http.HttpRequestException: The SSL connection could not be established, see inner exception.
-       ---> System.Security.Authentication.AuthenticationException: The remote certificate is invalid because of errors in the certificate chain: PartialChain
+       ---> System.Security.Authentication.AuthenticationException: The remote certificate is invalid according to the validation procedure: RemoteCertificateNameMismatch, RemoteCertificateChainErrors
 ```
+
+> Other SSL errors that can be caused by untrusted certificates are errors in the `PartialChain` or `UntrustedRoot` errors.
 
 This happens because our container does not trust the Azurite certificate. This certificate is self-signed after all and does not come from a trusted source.
 
@@ -292,7 +296,7 @@ ENTRYPOINT ["dotnet", "demo-app.dll"]
 Okay! That should do the trick! Run `docker compose up -d --build` to rebuild our container with the new Dockerfile instructions.
 
 Navigate to the `/blob` endpoint of the container's URL and you should see your blob data (or a message you don't have an item):
-![successful azurite request](/assets/images/2024-07-23-azurite-with-https-in-docker/containerized-dotnet-succesfully-azurite.png)
+![successful azurite request](/assets/images/2024-08-07-azurite-with-https-in-docker/containerized-dotnet-succesfully-azurite.png)
 
 ## Next steps
 

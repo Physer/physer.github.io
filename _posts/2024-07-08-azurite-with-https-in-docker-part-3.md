@@ -1,8 +1,8 @@
 ---
-# layout: post
-# title: "Azurite, HTTPS, Azure Storage SDKs, Azure Storage Explorer and Docker - Part 3"
-# date: 2023-07-23 11:40 +0200
-# categories: azure
+layout: post
+title: "Let's build an Azure Storage solution using Azurite, self-signed certificates, Docker, .NET and Azure - Part 3"
+date: 2024-08-07 15:00 +0200
+categories: azure
 ---
 
 ## Introduction
@@ -30,7 +30,7 @@ This part of this blog series will cover what the `DefaultAzureCredential` is, h
 
 ### Overview
 
-If there ever is a silver bullet for simplifying authentication through code, it's the [DefaultAzureCredential](https://learn.microsoft.com/en-us/dotnet/api/overview/azure/identity-readme?view=azure-dotnet#key-concepts).
+If there ever was a silver bullet for simplifying authentication through code, it's the [DefaultAzureCredential](https://learn.microsoft.com/en-us/dotnet/api/overview/azure/identity-readme?view=azure-dotnet#key-concepts).
 
 The `DefaultAzureCredential` mechanism goes through different types of authentication methods chronologically. Stopping when a certain method is satisfied.
 
@@ -71,6 +71,36 @@ builder.Services.AddAzureClients(clientBuilder =>
   clientBuilder.AddBlobServiceClient(new Uri("http://127.0.0.1:10000/devstoreaccount1"));
   clientBuilder.UseCredential(new DefaultAzureCredential());
 });
+```
+
+Resulting in a `Program.cs` file that looks like this:
+
+```csharp
+using Azure.Identity;
+using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Azure;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddAzureClients(clientBuilder =>
+{
+  clientBuilder.AddBlobServiceClient(new Uri("http://127.0.0.1:10000/devstoreaccount1"));
+  clientBuilder.UseCredential(new DefaultAzureCredential());
+});
+var app = builder.Build();
+
+app.MapGet("/blob", ([FromServices] BlobServiceClient blobServiceClient) =>
+{
+  BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient("demo");
+  blobContainerClient.CreateIfNotExists();
+
+  var blob = blobContainerClient.GetBlobs()?.FirstOrDefault();
+  return blob is null ? Results.Ok("No blob item available") : Results.Ok(blob);
+});
+app.MapGet("/", () => "Hello World!");
+
+app.Run();
+
 ```
 
 Alright! Let's try to run it.
@@ -129,6 +159,7 @@ services:
       - 10002:10002
     volumes:
       - ./certs:/certs
+      - blobs:/data
     command:
       [
         "azurite",
@@ -144,12 +175,19 @@ services:
         "/certs/key.pem",
         "--oauth",
         "basic",
+        "--location",
+        "/data",
       ]
+
+volumes:
+  blobs:
 ```
 
 As you can see we've added quite a few parameters to the Azurite launch command. First of all, we have bound the certificate and key for the TLS certificate to Azurite through the `--cert` and `--key` parameters. Additionally, if we want to make use of the `DefaultAzureCredential` mechanism, we also need to enable [OAuth](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage#oauth-configuration).
 
 Secondly, since we're using a Docker container we will need the application te able to expose the certificate. If we simply let Azurite bind itself to `127.0.0.1`, we will not be able to access the certificate details from outside the container (for a handshake, for instance). To support this, we let Azurite listen on every IP address by specifying the `--blobHost` parameter (and queue and table, but those are not relevant for this blog post). For more information about the listening host configuration, check out [the documentation](https://github.com/Azure/Azurite/blob/main/README.md#listening-host-configuration).
+
+And lastly, once we override the default Azurite launch command we need to make sure to point to the proper persistence location for data storage. In our case that's the `/data` folder since that's what we bind the `blobs` volume to.
 
 Run `docker compose up -d` to recreate Azurite with these new parameters.
 
@@ -186,6 +224,8 @@ sudo update-ca-certificates
 Please refer to [Microsoft's documentation](https://github.com/Azure/Azurite/blob/main/README.md#https-setup) for more details.
 
 Personally I'm using the Azure Storage Explorer on Windows, whilst all the other things live in WSL2. In this case I copy over self-signed `cert.pem` file. I then trust it on my Windows machine by running `certutil –addstore -enterprise –f "Root" cert.pem`.
+
+> You need an elevated terminal to execute the `certutil` command.
 
 Before we test our .NET application, let's go to the Azure Storage Explorer.
 
@@ -230,12 +270,12 @@ DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;AccountKey=Eby8vdM02
 Once you're connected, ensure there's an image in the `demo` container.
 
 The Azure Storage Explorer will look something like this. Notice the `Properties` in the lower left corner:
-![Azure Storage Explorer with HTTPS](/assets/images/2024-07-23-azurite-with-https-in-docker/azure-storage-explorer-https.png)
+![Azure Storage Explorer with HTTPS](/assets/images/2024-08-07-azurite-with-https-in-docker/azure-storage-explorer-https.png)
 
 Now that we know our Azurite is working properly with HTTPS, let's fire up our .NET application (`dotnet run` in the `~/azurite-demo/demo-app` directory) and navigate to the `/blob` endpoint.
 
 You should see valid output returned by an HTTP 200 OK status code, similar to:
-![.NET application calls Azurite through HTTPS](/assets/images/2024-07-23-azurite-with-https-in-docker/dotnet-succesfully-https-azurite.png)
+![.NET application calls Azurite through HTTPS](/assets/images/2024-08-07-azurite-with-https-in-docker/dotnet-succesfully-https-azurite.png)
 
 ## Almost there
 
@@ -247,4 +287,4 @@ In the next part we are going to containerize our .NET application. Since we're 
 
 Though of course the fun _really_ only starts from part 4 onwards! 😉
 
-Continue to part 4 here: []().
+Continue to [part 4 here]().
