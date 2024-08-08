@@ -27,11 +27,11 @@ The first part of this blog series will focus on setting up our environment. We'
 
 Read the other parts here:
 
-- [Part 2 - Setting up a sample .NET application for interacting with Azure Blobs]()
-- [Part 3 - Using the DefaultAzureCredential and configuring Azurite for HTTPS with a self-signed certificate]()
-- [Part 4 - Containerizing our application and communicating with the Azurite container]()
-- [Part 5 - Optimizing our application's Docker image and using environment variables]()
-- [Part 6 - Provisioning, deploying to and using real Azure components]()
+- [Part 2 - Setting up a sample .NET application for interacting with Azure Blobs](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-2.html)
+- [Part 3 - Using the DefaultAzureCredential and configuring Azurite for HTTPS with a self-signed certificate](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-3.html)
+- [Part 4 - Containerizing our application and communicating with the Azurite container](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-4.html)
+- [Part 5 - Optimizing our application's Docker image and using environment variables](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-5.html)
+- [Part 6 - Provisioning, deploying to and using real Azure components](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-6.html)
 
 Part 1, 2 and 3 are mainly focussing on the technical aspect of integrating with Azurite on your machine, using a self-signed TLS certificate. On the other hand, part 4, 5 and 6 are focussed on deploying the same application to a real-world Azure environment. Either way, this series will allow you to connect to both Azurite and real-world Azure Storage Accounts without keeping any kind of security credential such as a connection string or key in your code or application settings/environment variables.
 
@@ -47,7 +47,7 @@ If you want to follow along with this blog series, you will need the following s
 - [An Azure account](https://azure.microsoft.com/en-us/free)
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/get-started-with-azure-cli)
 
-Note that I'm doing this on a Windows machine using WSL2 and Visual Studio Code. All applications and tools are available cross-platform. The code is available in my [Github repository]() as well.
+Note that I'm doing this on a Windows machine using WSL2 and Visual Studio Code. All applications and tools are available cross-platform. The code is available in my [Github repository](https://github.com/Physer/physer.github.io/tree/main/code/2024-07-08-azurite-https-in-docker) as well.
 
 ## Setting up Azurite in Docker using Compose
 
@@ -97,7 +97,7 @@ When the container gets restarted, deleted or otherwise inconvenienced, all our 
 
 For this scenario I'm going to choose a volume, since we won't be interacting _directly_ with the files in the Azure Storage, but rather through Azure Storage Explorer. Of course, if you do want to choose a bind mount, that's perfectly fine as well and will work just fine too.
 
-> Fun fact! We are going to use a bind mount for the certificate sharing in our Azurite and .NET application containers in [part 4]().
+> Fun fact! We are going to use a bind mount for the certificate sharing in our Azurite and .NET application containers in [part 4](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-4.html).
 
 Let's open up our Compose file (`~/azurite-demo/compose.yaml`) and at the bottom of the file add a new volume called `blobs` like so:
 
@@ -139,7 +139,7 @@ volumes:
   blobs:
 ```
 
-> If you do bind your volume to the `/data` path of the container, you need to specify the location in the startup command. More on the startup command will be covered in [part 3]().
+> If you do bind your volume to the `/data` path of the container, you need to specify the location in the startup command. More on the startup command will be covered in [part 3](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-3.html).
 
 Run the Compose services by executing `docker compose up -d`. You can now stop and delete the Azurite container (`docker rm -f azurite`), re-run it by running `docker compose up -d` and you'd keep your data.
 
@@ -172,4 +172,4 @@ Finally your Azure Storage Explorer could look something like this:
 
 This concludes the first part of this blog series! Setting up Azurite and the Storage Explorer will give us a solid foundation for setting up our example application where we'll connect our Docker container to so we can actually interact with Azure Storage.
 
-Continue to [part 2 here]().
+Continue to [part 2 here](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-2.html).

@@ -9,7 +9,7 @@ categories: azure
 
 Welcome back to the blog series about setting up Azurite using HTTPS in Docker!
 
-If you haven't read part 1, you can do so [here]().
+If you haven't read part 1, you can do so [here](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-1.html).
 
 In this part of the blog series, we'll focus on setting up an example application using the Azure Storage SDKs to communicate with Azure (or Azurite in this case). Our example application will be a very simple application, returning the first available file in a Blob Container.
 
@@ -200,4 +200,4 @@ Sure, we could simply move this to a configuration file such as the `appsettings
 
 The next step will be to leverage the `DefaultAzureCredential` class from the `Azure.Identity` package to make our code agnostic of both the specific credentials required as well as the _type_ of credential being used. This means that we can use environment variables, interactive credentials or managed identities all with the same bit of code!
 
-Continue to [part 3 here]().
+Continue to [part 3 here](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-3.html).

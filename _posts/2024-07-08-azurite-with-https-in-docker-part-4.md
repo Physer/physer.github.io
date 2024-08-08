@@ -13,9 +13,9 @@ In the previous parts we've covered setting up Azurite as a Docker container, se
 
 You can read the previous parts here:
 
-- [Part 1]()
-- [Part 2]()
-- [Part 3]()
+- [Part 1](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-1.html)
+- [Part 2](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-2.html)
+- [Part 3](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-3.html)
 
 In this part of the series we will focus on containerizing our application and allowing communication between our Azurite container and our .NET application's container.
 
@@ -109,7 +109,7 @@ Our `DefaultAzureCredential` can't find a way to authenticate the container with
 
 ## Connecting our container to Azure
 
-As described in [Part 3](), due to the nature of the `DefaultAzureCredential` mechanism, we will need a way to authenticate to Azure. There are several ways to do so (you can view the diagram in part 3).
+As described in [Part 3](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-3.html), due to the nature of the `DefaultAzureCredential` mechanism, we will need a way to authenticate to Azure. There are several ways to do so (you can view the diagram in part 3).
 
 The easiest way to do so through our Docker container is by setting environment variables.
 
@@ -186,7 +186,7 @@ info: Azure.Core[18]
 
 ## Regenerating our self-signed certificate
 
-In [Part 3]() of this blog series, we have created a self-signed TLS certificate for our Azurite container so our machine could securely communicate with it. When we generated that certificate, we've done so for the IP address `127.0.0.1`. Due to how Docker's networking is set up we can't connect to our Azurite Docker container by this IP address: `127.0.0.1`. From the container's point of view this would be their own loopback address. Not the place where Azurite is running.
+In [Part 3](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-3.html) of this blog series, we have created a self-signed TLS certificate for our Azurite container so our machine could securely communicate with it. When we generated that certificate, we've done so for the IP address `127.0.0.1`. Due to how Docker's networking is set up we can't connect to our Azurite Docker container by this IP address: `127.0.0.1`. From the container's point of view this would be their own loopback address. Not the place where Azurite is running.
 
 The easiest way to fix this is to communicate with our Docker container using the container name. Docker automatically supports communication between containers by their name.
 
@@ -308,4 +308,4 @@ Great! This also allows you to use the certificate on your host machine to inspe
 
 However, currently our Dockerfile always uses the certificates which is useless for an environment other than development. In the next part we'll tidy up and optimize our Dockerfile as well as our code to use environment variables for the Azurite URL.
 
-Continue to [part 5 here]().
+Continue to [part 5 here](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-5.html).

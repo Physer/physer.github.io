@@ -57,7 +57,7 @@ Run the application (`dotnet run`) and verify you still get a response from your
 
 Now that we've got our application ready to support different URLs based on appsettings, we can also add this to our containerized version of the application.
 
-We have already done a similar thing for our Azure credentials using the `azure.env` file in [part 4]() of this series.
+We have already done a similar thing for our Azure credentials using the `azure.env` file in [part 4](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-4.html) of this series.
 
 Now let's create a `app.env` file in the root directory of your project (`~/azurite-demo`) and add the storage URL appsetting.
 
@@ -194,8 +194,8 @@ Great! We now have an optimized Dockerfile with support from Compose to have the
 
 We also have updated our code to let the Blob Service Client be registered based on an app setting rather than a hardcoded URL.
 
-In the next part we'll deploy a real storage account in Azure, upload a blob to it and deploy our .NET application to Azure and allow it to read the file using managed identities and the _same_ code as we've written all the way back in [part 3]() - excluding the environment variables, but that was a minor change 😉!
+In the next part we'll deploy a real storage account in Azure, upload a blob to it and deploy our .NET application to Azure and allow it to read the file using managed identities and the _same_ code as we've written all the way back in [part 3](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-3.html) - excluding the environment variables, but that was a minor change 😉!
 
 If you want to clean up your local Docker files you can run `docker compose down --rmi all`. If you want to clean your entire Docker environment afterwards, you can run: `docker system prune -af && docker volume prune -af && docker builder prune -af`.
 
-Continue to [part 6 here]().
+Continue to [part 6 here](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-6.html).

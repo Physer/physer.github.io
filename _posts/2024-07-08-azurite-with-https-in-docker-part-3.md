@@ -11,8 +11,8 @@ Welcome back to the third part in the blog series about using Azurite over HTTPS
 
 You can read the previous parts here:
 
-- [Part 1]()
-- [Part 2]()
+- [Part 1](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-1.html)
+- [Part 2](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-2.html)
 
 In the previous two parts of this blog series, we've focused on setting up our development environment. We have a working Azure Storage emulator in the form of Azurite and we have a simple .NET API that can interact with a blob in this Azure Storage emulator.
 
@@ -49,7 +49,7 @@ Verify your Azure CLI is available in your terminal. Run `az version`. When your
 
 ### Wiring it up
 
-In [part 2]() of this blog series we've created a simple .NET application to interact with our Blob service from Azurite. Let's open up our application and navigate to the `Program.cs` file.
+In [part 2](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-2.html) of this blog series we've created a simple .NET application to interact with our Blob service from Azurite. Let's open up our application and navigate to the `Program.cs` file.
 
 Remember that we've installed the `Azure.Identity` package? We haven't used this package yet but we will now.
 
@@ -287,4 +287,4 @@ In the next part we are going to containerize our .NET application. Since we're 
 
 Though of course the fun _really_ only starts from part 4 onwards! 😉
 
-Continue to [part 4 here]().
+Continue to [part 4 here](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-4.html).
