@@ -1,0 +1,44 @@
+services:
+  azurite:
+    container_name: azurite
+    image: mcr.microsoft.com/azure-storage/azurite
+    ports:
+      - 10000:10000
+      - 10001:10001
+      - 10002:10002
+    volumes:
+      - ./certs:/certs
+      - blobs:/data
+    command:
+      [
+        "azurite",
+        "--blobHost",
+        "0.0.0.0",
+        "--queueHost",
+        "0.0.0.0",
+        "--tableHost",
+        "0.0.0.0",
+        "--cert",
+        "/certs/cert.pem",
+        "--key",
+        "/certs/key.pem",
+        "--oauth",
+        "basic",
+        "--location",
+        "/data"
+      ]
+
+  demo_app:
+    container_name: demo-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    env_file:
+      - azure.env
+      - app.env
+    ports:
+      - 8080
+
+volumes:
+  blobs:
