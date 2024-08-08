@@ -196,6 +196,8 @@ If you want you can upload an item to the Blob container using any of the prefer
 After uploading an item and upon refreshing the `/blob` endpoint, you'll see data regarding the uploaded blob!
 ![Successful Azure managed identity call with Blob data](/assets/images/2024-08-07-azurite-with-https-in-docker/azure-successful-blob-data.png)
 
+If you want to clean up your Azure resources after this blog post, you can remove the entire resource group by executing `az group delete --name rg-azurite --yes`.
+
 ## Result and recap
 
 And there you have it!
