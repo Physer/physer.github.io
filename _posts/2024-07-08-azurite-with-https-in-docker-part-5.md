@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Let's build an Azure Storage solution using Azurite, self-signed certificates, Docker, .NET and Azure - Part 5"
+title: "Accessing Azure Storage services without storing secrets using Azurite, Docker, HTTPS and Azure - Part 5"
 date: 2024-08-07 15:00 +0200
 categories: azure
 ---

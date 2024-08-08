@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Let's build an Azure Storage solution using Azurite, self-signed certificates, Docker, .NET and Azure - Part 4"
+title: "Accessing Azure Storage services without storing secrets using Azurite, Docker, HTTPS and Azure - Part 4"
 date: 2024-08-07 15:00 +0200
 categories: azure
 ---
@@ -297,6 +297,8 @@ Okay! That should do the trick! Run `docker compose up -d --build` to rebuild ou
 
 Navigate to the `/blob` endpoint of the container's URL and you should see your blob data (or a message you don't have an item):
 ![successful azurite request](/assets/images/2024-08-07-azurite-with-https-in-docker/containerized-dotnet-succesfully-azurite.png)
+
+If you still encounter SSL errors in your container, make sure you've restarted the Azurite container (`docker restart azurite`) after you've updated the certificate with the new subject (`DNS:azurite`).
 
 ## Next steps
 

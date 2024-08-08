@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Let's build an Azure Storage solution using Azurite, self-signed certificates, Docker, .NET and Azure - Part 1"
+title: "Accessing Azure Storage services without storing secrets using Azurite, Docker, HTTPS and Azure - Part 1"
 date: 2024-08-07 15:00 +0200
 categories: azure
 ---
@@ -141,12 +141,10 @@ volumes:
 
 > If you do bind your volume to the `/data` path of the container, you need to specify the location in the startup command. More on the startup command will be covered in [part 3]().
 
-Run the Compose services by executing `docker compose up -d`. You can now stop and delete the Azurite container (`docker rm -f azurite`), re-run it by running `docker compose up -d` and you'd still see the same blob in your Azure Storage Explorer.
+Run the Compose services by executing `docker compose up -d`. You can now stop and delete the Azurite container (`docker rm -f azurite`), re-run it by running `docker compose up -d` and you'd keep your data.
 
 You can also inspect the Docker volume (`docker volume inspect azurite-demo_blobs`) or use Docker Desktop to view the volume like so:
 ![Docker Desktop volume inspect](/assets/images/2024-08-07-azurite-with-https-in-docker/docker-desktop-volume-inspect.png)
-
-> Don't panic if you don't see any content in your volume yet. Set up the Azure Storage Explorer and upload an item to a container as specified in the next paragraph. Afterwards, check out your volume.
 
 ## Setting up the Azure Storage Explorer
 

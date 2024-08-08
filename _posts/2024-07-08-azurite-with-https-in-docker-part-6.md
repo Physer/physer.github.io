@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Let's build an Azure Storage solution using Azurite, self-signed certificates, Docker, .NET and Azure - Part 6"
+title: "Accessing Azure Storage services without storing secrets using Azurite, Docker, HTTPS and Azure - Part 6"
 date: 2024-08-07 15:00 +0200
 categories: azure
 ---
@@ -25,12 +25,6 @@ Next up we'll create a resource group by running `az group create --location wes
 
 > If you want to create a resource group in a different location or with a different name, you're of course free to do so.
 
-We'll also set up an [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/) and push our image through the registry. If you prefer to use the Docker Hub or any other kind of registry, that's also fine.
-
-Create the registry by running: `az acr create --resource-group rg-azurite --name crazuritedemo --sku Basic`. After the registry's been created, we can use the `az acr` CLI tool to build and push our image directly to the registry. Ensure you're (still) in the root of your project, where the Dockerfile is located (`~/azurite-demo`) and run `az acr build --image azurite-demo/demo-app:v1 --registry crazuritedemo --file Dockerfile .`. This command will allow you to build and push the image using Azure directly. Note that we're not specifying a target now, as we don't want the certificate mumbo-jumbo to come along to Azure.
-
-> You might see some certificate related log messages when applying the `az acr` command. Do not worry though, this intermediate container will not be part of Azure's final image.
-
 The rest of the resources will be created through [Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview?tabs=bicep). I highly recommend using Visual Studio Code with the [Bicep extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.visualstudiobicep) from Microsoft, this makes it a breeze to author Bicep files.
 
 Create a new Bicep file in the root folder of your project called `main.bicep` (`~/azurite-demo/main.bicep`). Once created, we'll add our Storage Account resource definition to it.
@@ -48,131 +42,150 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
 
 Due to a storage account requiring a globally unique name, I prefer to append the hashed version of the resource group ID to it. If you prefer to use a different name, or different values for the SKU - that's completely fine.
 
-Now we are going to create a user-assigned managed identity. Contrary to system-assigned managed identities, user-assigned managed identities persist throughout the deletion of resources. System-assigned identities are managed by Azure and bound to a specific resource. For more information about the different types of managed identities, take a look at [Microsoft's documentation](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview#managed-identity-types).
+Next up, we'll create the resource definitions for our .NET application. We're going to use an [Azure App Service](https://learn.microsoft.com/en-us/azure/app-service/) in this tutorial. You could also use an Azure Container Instance, or an Azure Container App if you so desire.
 
-Let's add a user-assigned managed identity declaration to our Bicep file:
-
-```bicep
-resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' = {
-  name: 'id-demo-app'
+```Bicep
+resource demoAppPlan 'Microsoft.Web/serverfarms@2023-12-01' = {
+  name: 'asp-demo-app-${uniqueString(resourceGroup().id)}'
   location: resourceGroup().location
-}
-```
-
-Now that we have our user-assigned managed identity in place, we can assign a contributor role on the Blob storage for our identity as well as a role for pulling images from an Azure Container Registry. You can find a list of built-in role definitions over at [Microsoft's documentation](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles).
-
-```Bicep
-resource storageAccountDataReaderDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
-  scope: subscription()
-  name: '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
-}
-
-resource containerToStorageAccountRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageAccount.id, managedIdentity.id, storageAccountDataReaderDefinition.id)
+  sku: {
+    name: 'B1'
+  }
+  kind: 'linux'
   properties: {
-    principalId: managedIdentity.properties.principalId
-    roleDefinitionId: storageAccountDataReaderDefinition.id
-    principalType: 'ServicePrincipal'
+    reserved: true
   }
 }
 
-resource registryPullDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
-  scope: subscription()
-  name: '7f951dda-4ed3-4680-a7ca-43fe172d538d'
-}
-
-resource containerToRegistryRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageAccount.id, managedIdentity.id, registryPullDefinition.id)
-  properties: {
-    principalId: managedIdentity.properties.principalId
-    roleDefinitionId: registryPullDefinition.id
-    principalType: 'ServicePrincipal'
-  }
-}
-```
-
-Next up, we'll create the resource definitions for our .NET application. We're going to use an [Azure Container Instance](https://learn.microsoft.com/en-us/azure/container-instances/) in this tutorial. You could also use an Azure App Service, or an Azure Container App if you so desire. First we'll retrieve the previously created Azure Container Registry so we know where to pull our image from, then we'll set up the Container Instance proper.
-
-```Bicep
-resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' existing = {
-  name: 'crazuritedemo'
-}
-
-resource demoAppContainer 'Microsoft.ContainerInstance/containerGroups@2024-05-01-preview' = {
-  name: 'ci-demo-app-${uniqueString(resourceGroup().id)}'
+resource demoApp 'Microsoft.Web/sites@2023-12-01' = {
+  name: 'app-demo-app-${uniqueString(resourceGroup().id)}'
   location: resourceGroup().location
   identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${managedIdentity.id}': {}
-    }
+    type: 'SystemAssigned'
   }
   properties: {
-    imageRegistryCredentials: [
-      {
-        server: '${containerRegistry.name}.azurecr.io'
-        identity: managedIdentity.id
-      }
-    ]
-    containers: [
-      {
-        name: 'ci-demo-app-${uniqueString(resourceGroup().id)}'
-        properties: {
-          image: 'crazuritedemo.azurecr.io/azurite-demo/demo-app:v1'
-          environmentVariables: [
-            {
-              name: 'Storage__ServiceUri'
-              value: storageAccount.properties.primaryEndpoints.blob
-            }
-          ]
-          ports: [
-            {
-              port: 80
-              protocol: 'TCP'
-            }
-          ]
-          resources: {
-            requests: {
-              cpu: 1
-              memoryInGB: 1
-            }
-          }
-        }
-      }
-    ]
-    osType: 'Linux'
-    restartPolicy: 'OnFailure'
-    ipAddress: {
-      dnsNameLabel: 'ci-demo-app-${uniqueString(resourceGroup().id)}'
-      type: 'Public'
-      ports: [
+    serverFarmId: demoAppPlan.id
+    httpsOnly: true
+    siteConfig: {
+      linuxFxVersion: 'DOTNETCORE|8.0'
+      appSettings: [
         {
-          port: 80
-          protocol: 'TCP'
+          name: 'Storage__ServiceUri'
+          value: storageAccount.properties.primaryEndpoints.blob
         }
       ]
     }
   }
-  dependsOn: [
-    containerToRegistryRoleAssignment
-    containerToStorageAccountRoleAssignment
-  ]
 }
 ```
 
-After creating our Bicep file with our resource declarations, it's time to deploy our resources to Azure. Run the following command: `az deployment group create --resource-group rg-azurite --template-file ./main.bicep`.
+I'm choosing a Linux app service plan on the B1 SKU. The web app itself will have a system-assigned identity enabled and our Blob endpoint set to the value of the `Storage__ServiceUri` environment variable. Note that if you wish to create a Linux app service plan, it's important that you set both the `kind` value to `linux` as well as the `reserved` property to `true`. Additionally, make sure you set [the `linuxFxVersion` property](https://learn.microsoft.com/en-us/azure/app-service/quickstart-arm-template?pivots=platform-linux#review-the-template) to the stack version you're currently working on. For our .NET application, that's .NET 8 (written as `DOTNETCORE|8.0`).
+
+With our App Service, we've created a system-assigned identity. Contrary to user-assigned managed identities, system-assigned identities are managed by Azure and bound to a specific resource. For more information about the different types of managed identities, take a look at [Microsoft's documentation](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview#managed-identity-types).
+
+Now that we have our App Service with our system-assigned managed identity in place, we can assign a contributor role on the Blob storage for our identity. You can find a list of built-in role definitions over at [Microsoft's documentation](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles).
+
+```Bicep
+resource storageAccountDataContributorDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
+  scope: subscription()
+  name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+}
+
+resource appServiceRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
+  name: guid(storageAccount.id, demoApp.id, storageAccountDataContributorDefinition.id)
+  properties: {
+    principalId: demoApp.identity.principalId
+    roleDefinitionId: storageAccountDataContributorDefinition.id
+    principalType: 'ServicePrincipal'
+  }
+}
+```
+
+Your final Bicep file should look something like this:
+
+```bicep
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: 'stazurite${uniqueString(resourceGroup().id)}'
+  location: resourceGroup().location
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+}
+
+resource demoAppPlan 'Microsoft.Web/serverfarms@2023-12-01' = {
+  name: 'asp-demo-app-${uniqueString(resourceGroup().id)}'
+  location: resourceGroup().location
+  sku: {
+    name: 'B1'
+  }
+  kind: 'linux'
+  properties: {
+    reserved: true
+  }
+}
+
+resource demoApp 'Microsoft.Web/sites@2023-12-01' = {
+  name: 'app-demo-app-${uniqueString(resourceGroup().id)}'
+  location: resourceGroup().location
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    serverFarmId: demoAppPlan.id
+    httpsOnly: true
+    siteConfig: {
+      linuxFxVersion: 'DOTNETCORE|8.0'
+      appSettings: [
+        {
+          name: 'Storage__ServiceUri'
+          value: storageAccount.properties.primaryEndpoints.blob
+        }
+      ]
+    }
+  }
+}
+
+resource storageAccountDataContributorDefinition 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' existing = {
+  scope: subscription()
+  name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+}
+
+resource appServiceRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
+  name: guid(storageAccount.id, demoApp.id, storageAccountDataContributorDefinition.id)
+  properties: {
+    principalId: demoApp.identity.principalId
+    roleDefinitionId: storageAccountDataContributorDefinition.id
+    principalType: 'ServicePrincipal'
+  }
+}
+```
+
+After creating our Bicep file with our resource declarations, it's time to deploy our resources to Azure. Run the following command: `az deployment group create --resource-group rg-azurite --template-file ./main.bicep`. If you get errors deploying your resources, try a different resource group name.
 
 For more information about these Bicep declarations, see [Microsoft's Bicep reference](https://learn.microsoft.com/en-us/azure/templates/).
 
 > Of course you don't have to use Bicep. You can use the AZ CLI, as well as the Portal or any other method you prefer!
 
-## Testing our .NET application
+## Deploying the .NET application
 
-Now that we have all our resources in place, let's test our .NET application. If you want to retrieve the name of your container instance, you can run the following command: `az resource list --resource-group rg-azurite --resource-type Microsoft.ContainerInstance/containerGroups --query [0].name`. Once you have the name of your container instance, you can get its URL by running `az container show --resource-group rg-azurite --name ci-demo-app-mf53zb5hnqgto --query ipAddress.fqdn`.
+Now that we have all our resources in place, let's deploy our application to Azure. In this scenario I'll be using the `dotnet` CLI to publish the application to my local file system after which I'll be using the [ZIP deploy](https://learn.microsoft.com/en-us/azure/app-service/deploy-zip?tabs=cli#create-a-project-zip-package) functionality to upload it to the Azure App Service. If you wish to use a different way of deploying your application, e.g. through Visual Studio, that will work just as well.
+
+Let's navigate to our `demo-app` folder: `~/azurite-demo/demo-app`. Publish the application by running the `publish` command with the `dotnet` CLI: `dotnet publish --configuration Release --output ./publish`
+
+Navigate to the newly created `publish` folder (`~/azurite-demo/demo-app/publish`) and ZIP all the files in this directory: `zip -r demo-app.zip .`.
+
+> You might need to install `zip` on your machine (`sudo apt install zip -y`).
+
+Once all the published files are zipped, we can use the Azure CLI to deploy our application to our previously created Azure App Service: `az webapp deploy --resource-group rg-azurite --name app-demo-app-mf53zb5hnqgto --src-path ./demo-app.zip --type zip`. Be sure to replace the name of the web app with the name of your web app.
+
+> If you want to retrieve the name of your web app, you can run the following command: `az resource list --resource-group rg-azurite --resource-type Microsoft.Web/sites --query [0].name`.
+
+Wait for the command to complete and head over to your newly deployed Azure app service! You can find the URL for you app service by running this command: `az webapp show --resource-group rg-azurite --name app-demo-app-mf53zb5hnqgto --query defaultHostName`.
 
 > Replace the name of App Service with your app's name.
-
-!!!! WIP !!!!
 
 You should see the `Hello World!` output from the default endpoint. Navigate to the `/blob` endpoint. Since this is the first time we're looking at this endpoint, it will create the Blob container for us and show `No blob item available`:
 ![successful call to Azure Blob Storage with managed identity](/assets/images/2024-08-07-azurite-with-https-in-docker/azure-managed-identity-connection.png)
@@ -210,3 +223,28 @@ As with all my blog posts, the full code is available in the repository of this 
 Thank you and I'll see you in the next one!
 
 ## References
+
+> In order of appearance in the blog series.
+
+- [Azurite emulator](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite?tabs=visual-studio%2Cblob-storage)
+- [DefaultAzureCredential](https://learn.microsoft.com/en-us/dotnet/api/overview/azure/identity-readme?view=azure-dotnet#defaultazurecredential)
+- [What is HTTPS](https://www.cloudflare.com/learning/ssl/what-is-https/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Docker Compose](https://docs.docker.com/compose/)
+- [OpenSSL](https://docs.openssl.org/master/man1/openssl/)
+- [OpenSSL Windows Binaries](https://slproweb.com/products/Win32OpenSSL.html)
+- [Azure Storage Explorer](https://azure.microsoft.com/en-us/products/storage/storage-explorer)
+- [Azure account](https://azure.microsoft.com/en-us/free)
+- [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/get-started-with-azure-cli)
+- [Docker storage documentation](https://docs.docker.com/storage/)
+- [Docker's documentation on persisting data](https://docs.docker.com/guides/docker-concepts/running-containers/sharing-local-files/)
+- [Azure Storage Client Libraries](https://learn.microsoft.com/en-us/azure/storage/common/storage-introduction#storage-apis-libraries-and-tools)
+- [Dependency injection for the Azure SDK](https://learn.microsoft.com/en-us/dotnet/azure/sdk/dependency-injection?tabs=web-app-builder)
+- [Azure's managed identities](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview)
+- [Azurite's documentation on Github](https://github.com/Azure/Azurite/blob/main/README.md)
+- [Docker's multi-stage documentation](https://docs.docker.com/build/building/multi-stage/)
+- [Bicep documentation](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview?tabs=bicep)
+- [Azure App Service](https://learn.microsoft.com/en-us/azure/app-service/)
+- [Azure's built-in role definitions](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles)
+- [Bicep SDK reference](https://learn.microsoft.com/en-us/azure/templates/)
+- [App Service ZIP deploy documentation](https://learn.microsoft.com/en-us/azure/app-service/deploy-zip?tabs=cli#create-a-project-zip-package)
