@@ -1,0 +1,34 @@
+{
+    "cSpell.enabled": true,
+    "cSpell.words": [
+        "Alrighty",
+        "appsetting",
+        "appsettings",
+        "aspnet",
+        "azurecr",
+        "crazuritedemo",
+        "devstoreaccount",
+        "DOTNETCORE",
+        "Entra",
+        "physer",
+        "separater",
+        "serverfarms",
+        "stazurite",
+        "tokenprovider",
+        "westeurope",
+        "WORKDIR"
+    ],
+    "cSpell.ignoreWords": [
+        "Bekso",
+        "CDXJ",
+        "SZFPT",
+        "addext",
+        "addstore",
+        "arsr",
+        "certutil",
+        "hnqgto",
+        "keyid",
+        "keyout",
+        "newkey"
+    ]
+}
