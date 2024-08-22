@@ -15,6 +15,14 @@ In this final part we're going to set up the Azure resources for our blob storag
 
 > This part of the series requires you to have an Azure account with a valid subscription.
 
+You can read the previous parts here:
+
+- [Part 1](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-1.html)
+- [Part 2](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-2.html)
+- [Part 3](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-3.html)
+- [Part 4](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-4.html)
+- [Part 5](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-5.html)
+
 ## Setting up Azure resources
 
 Make sure you're installed the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli).
@@ -220,7 +228,7 @@ We have followed these steps:
 
 I hope you have enjoyed our journey through Azure's wondrous worlds of SDKs, authentication and managed identities. Thank you for taking the time to read my blog posts and I hope it will help you out on your cloud endeavors!
 
-As with all my blog posts, the full code is available in the repository of this site: [physer.github.io]().
+As with all my blog posts, the full code is available in the repository of this site: [physer.github.io](https://github.com/Physer/physer.github.io/tree/main/code/2024-07-08-azurite-https-in-docker).
 
 Thank you and I'll see you in the next one!
 

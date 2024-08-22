@@ -13,6 +13,13 @@ In the previous parts we've assembled all the puzzle pieces necessary for commun
 
 In this part we will optimize our Dockerfile and code so this only becomes relevant for our development cycle, not our other environments.
 
+You can read the previous parts here:
+
+- [Part 1](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-1.html)
+- [Part 2](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-2.html)
+- [Part 3](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-3.html)
+- [Part 4](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-4.html)
+
 ## Using environment variables
 
 Let's start with moving our hard-coded service URL in our `~/azurite-demo/demo-app/Program.cs` file to the `appsettings.json` file.
