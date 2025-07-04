@@ -88,7 +88,7 @@ Don't forget to smash the save button in the bottom!
 
 That concludes the necessary set up for our Auth0 tenant and application. Let's switch back to our .NET project to set up the integration with the Auth0 SDK!
 
-## Updating our .NET project with the Auth0 SDK
+## Integrating our .NET project with Auth0
 
 Now that we've got our Auth0 tenant set up and our Auth0 application configured, let's get back to our .NET project and set up things from that side.
 
@@ -123,9 +123,181 @@ Your `appsettings.json` file should now look like this:
 
 > My ClientId has been redacted in the examples, make sure to fill in your details properly when following along with this blogpost.
 
-## Creating the pages in .NET
+Verify everything is still working correctly by running your program and navigating to your application (`dotnet run`).
 
-## Creating our users and roles in Auth0
+Cool! Our ASP.NET Core application is now integrated with the Auth0 SDK. In the next stage we will create a way to log in and out of the ASP.NET Core application.
+
+## Creating UI support for logging in and out
+
+So we've set up our Auth0 integration, great! It won't do us much good though until we've set up a way to authenticate. We need to be able to log in (and out, preferably) through our ASP.NET Core application.
+
+Let's switch back to Visual Studio Code and head over to the `Program.cs` file, the entry point of our application.
+
+Near the bottom of the file you can spot a line containing: `app.UseAuthorization();`. Add the following line above it: `app.UseAuthentication();`. This sets our application up to not only use authorization policies but also support authentication.
+
+> Reminder: Authentication is the process of determining the validity of a user's identity. Is the user who it says it is? Whereas authorization is the process of verifying the access of a user. Once a user is identified, is it allowed to do what it's trying to do?
+
+For simplicity, I'm going to create a new Razor Pages page that takes care of logging the user in and another one that takes care of logging the user out. This is not the only way to this though, you could also set up minimal endpoints, for instance.
+
+Let's add a new empty Razor page and its code-behind file. Run `touch Pages/Login.cshtml & touch Pages/Login.cshtml.cs`
+
+Open up your `Login.cshtml` file and add the following lines:
+
+```
+@page
+@model LoginModel
+```
+
+Next, add the following code to your `Login.cshtml.cs` file:
+
+```csharp
+using Auth0.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace auth0_aspnet_demo.Pages;
+
+public class LoginModel : PageModel
+{
+    public async Task OnGetAsync()
+    {
+        var authenticationProperties = new LoginAuthenticationPropertiesBuilder().WithRedirectUri("/").Build();
+        await HttpContext.ChallengeAsync(Auth0Constants.AuthenticationScheme, authenticationProperties);
+    }
+}
+```
+
+If you're following along with the tutorial, verify your namespace and usings are correctly set.
+
+Let's see if it worked! Run your application (`dotnet run`) and navigate to your URL. Go to `/login` and you should be redirected to Auth0. Register as a new user or log in as an existing one if you already have an account in Auth0. Afterwards, you should be redirected back to your application!
+
+> If you run into an error in the Auth0 redirecting process, ensure your callback URL matches the URL you're visiting, for instance if you've set up Auth0 to accept `http://localhost:5203/callback`, and you're on `http:127.0.0.1:5203/callback`, Auth0 will not accept the URL.
+
+To verify we're actually logged in as a user we can quickly update our homepage to show some data of the logged in user.
+
+Open up your `Pages/Index.cshtml` file and below the existing code add the following:
+
+```html
+@if (User.Identity?.IsAuthenticated == true) {
+<p>Hello, @User.Identity.Name</p>
+}
+```
+
+Run your application and if you're still logged in (you might have to login again by navigating to the `/login` page), you should see your e-mail address pop up like so:
+
+![User details from .NET Identity](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/aspnet-user-identity-details.png)
+
+Let's also quickly add a page to log out from the application. We will create a page similar to the login page, except now it will log you out. Run `touch Pages/Logout.cshtml & touch Pages/Logout.cshtml.cs` (or create them in any way you're comfortable).
+
+Open `Pages/Logout.cshtml` and add the following lines:
+
+```
+@page
+@model LogoutModel
+```
+
+Next, open up the code-behind: `Pages/Logout.cshtml.cs` and add these lines:
+
+```csharp
+using Auth0.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace auth0_aspnet_demo.Pages;
+
+public class LogoutModel : PageModel
+{
+    public async Task OnGetAsync()
+    {
+        var authenticationProperties = new LogoutAuthenticationPropertiesBuilder().WithRedirectUri("/").Build();
+        await HttpContext.SignOutAsync(Auth0Constants.AuthenticationScheme, authenticationProperties);
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    }
+}
+```
+
+Ensure you're signing out of both the Auth0 authentication scheme and the Cookie authentication scheme and spin up your application to test it out!
+
+First `/login` as a user, head over the homepage to verify you're logged in and then navigate to `/logout`. If you head over to the homepage after logging out (you should already be there since you get redirect to it) you won't see your user information anymore.
+
+> The logging out process can happen very quickly, don't be surprised if you don't notice a lot happening. At the very least the user information should be gone from the homepage though.
+
+Awesome! We can log in using Auth0 as an identity management platform and we can see that it's tied into the .NET ecosystem by simply reading from the User object available in the .NET SDK. Now let's create some pages that only logged in (and privileged) users can access.
+
+## Creating pages in .NET only authenticated and authorized users can visit
+
+Okay, now that we're able to log in (and out) as a user, let's set up some pages that only (privileged) users can access.
+
+Let's create a page only an authenticated user can access, regardless of his roles and rights. We'll create a page and its code-behind like so: `touch Pages/Authenticated.cshtml & touch Pages/Authenticated.cshtml.cs`.
+
+Open up the `Pages/Authenticated.cshtml` file and add the following lines:
+
+```
+@page
+@model AuthenticatedModel
+@{
+    ViewData["Title"] = "A very secure page";
+}
+
+<div>Congratulations! You're logged in, otherwise you wouldn't be able to see this.</div>
+```
+
+Next, open its code-behind (`Pages/Authenticated.cshtml.cs`) and add these lines:
+
+```csharp
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace auth0_aspnet_demo.Pages;
+
+[Authorize]
+public class AuthenticatedModel : PageModel;
+```
+
+> There are different ways of setting authentication and authorization conventions in ASP.NET Core Razor Pages but for simplicity, we are creating an empty page model here to decorate it with the proper attribute.
+
+Now to verify it works, run your application. Make sure you're logged out by navigating to the `/logout` URL and try to navigate to the `/authenticated` URL. You will probably end up on a 404 with a weird URL saying something like `/Account/Login?ReturnUrl=%2Fauthenticated`. Don't worry about this for now, this is simply because we haven't configured the URL unauthorized users will land on. Log in by navigating to the `/login` URL and try to go to the `/authenticated` URL again. You should now be able to access the page and see something like this:
+
+![The /authenticated page when you're logged in](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/aspnet-authenticated-page.png)
+
+Now that we have a page that every authenticated user can access, let's add a page that only a user in a specific _role_ can access. This is called [role-based authorization](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/roles?view=aspnetcore-9.0) in ASP.NET Core.
+
+We'll create a page that only users that belong to the `Admin` role can access. Remember the name of this role, we'll need this later in Auth0. Let's create an admin page: `touch Pages/Admin.cshtml & touch Pages/Admin.cshtml.cs`.
+
+Open the `Pages/Admin.cshtml` file and add:
+
+```
+@page
+@model AdminModel
+@{
+    ViewData["Title"] = "Area 51";
+}
+
+<div>Wow, you're an admin! So cool!</div>
+```
+
+Then open up the code-behind (`Pages/Admin.cshtml.cs`) and add:
+
+```csharp
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace auth0_aspnet_demo.Pages;
+
+[Authorize(Roles = "Admin")]
+public class AdminModel : PageModel;
+```
+
+Notice how we have specified a specific role in our `[Authorize]` attribute. Now only users that will have the `Admin` role as a specific claim will be able to access this page.
+
+At this point in time we are not yet able to assign an Admin role to our user. We will take care of that in the next chapter. We can, however, verify a 'regular' logged-in user does not have access to this page.
+
+Run your application, verify you're logged in by navigating to the `/login` endpoint and try to navigate to the `/admin` page. You should (again) end up on a non-existing URL like `/Account/AccessDenied?ReturnUrl=%2Fadmin` which is (again) because we haven't configured the redirects.
+
+As you can see, we can't access our page even though we're logged in. We don't have the proper role assigned to our logged-in user! Let's fix that in Auth0.
+
+## Assigning roles to our users in Auth0
 
 ## Writing an Auth0 post-login Action
 
