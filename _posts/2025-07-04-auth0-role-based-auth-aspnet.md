@@ -23,7 +23,7 @@ This blog post explains how to set-up your Auth0 tenant so that ASP.NET Core wil
 
 ## TL;DR
 
-This blogpost is a comprehensive post about setting up an ASP.NET Core application and Auth0 tenant from scratch. If you're only interested in the part where we configure Auth0 to pass the assigned role to the .NET application, please take a look at the chapter [Writing an Auth0 post-login Action](#writing-an-auth0-post-login-action) and optionally at the preceding [Creating pages in .NET only authenticated and authorized users can visit](#creating-pages-in-net-only-authenticated-and-authorized-users-can-visit).
+This blogpost is a comprehensive post about setting up an ASP.NET Core application and Auth0 tenant from scratch. If you're only interested in the part where we configure Auth0 to pass the assigned role to the .NET application, please take a look at the chapter: [Writing an Auth0 post-login Action](#writing-an-auth0-post-login-action) and optionally at the preceding chapter: [Creating pages in .NET only authenticated and authorized users can visit](#creating-pages-in-net-only-authenticated-and-authorized-users-can-visit).
 
 In order to use ASP.NET Core's built-in [role-based-authorization](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/roles?view=aspnetcore-9.0) in conjunction with Auth0, we can leverage Auth0's post-login actions to set Microsoft's role claim value to the assigned user's roles. This allows for clean management of users and roles in Auth0 whilst still retaining full out-of-the-box support in ASP.NET Core with roles.
 
@@ -56,6 +56,7 @@ info: Microsoft.Hosting.Lifetime[0]
 ```
 
 Open your browser and navigate to the presented URL (or CTRL+Click) to verify you can see the new Razor Pages project looking something like this:
+
 ![Newly created ASP.NET Core Razor Pages project](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/new-razor-pages-project.png)
 
 Perfect! For simplicity's sake, we'll keep everything as-is. If you'd like to customize your application and its styling, feel free to do so however!
@@ -71,12 +72,15 @@ Head over to https://auth0.com and log in or sign up. Select the tenant you want
 I'm not going into details on how to set up a new tenant in Auth0 or what a tenant is exactly. If you'd like more information about this, please view Auth0's [Get Started](https://auth0.com/docs/get-started/auth0-overview) documentation.
 
 For demo purposes, I have created a new tenant in the EU with the Development environment tag:
+
 ![New Auth0 tenant](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/auth0-new-tenant.png)
 
 Once your tenant has been created, head over to the Applications tab in the sidebar and select the Applications sub navigation item. Once you're on the applications page, create a new application by pressing the button: `+ Create Application`:
+
 ![New Auth0 application](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/auth0-new-application.png)
 
 Select the desired type of application, in case of this example: Regular Web Applications and click on create:
+
 ![Create Auth0 Application modal](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/auth0-create-application-modal.png)
 
 Feel free to open the Quickstart for ASP.NET Core MVC or follow along with this post to fully set up your tenant for local use.
@@ -90,6 +94,7 @@ In my example, the Allowed Callback URL will be: `http://localhost:5203/callback
 Add the URL(s) (without a path) in the `Allowed Logout URLs` field. In my example, that would be: `http://localhost:5203`.
 
 This will result in your settings looking something like this:
+
 ![Application URI settings](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/auth0-application-uris.png)
 
 Don't forget to smash the save button in the bottom!
@@ -123,9 +128,18 @@ For demo purposes, I'm simply going to add them to our `appsettings.json` but be
 Your `appsettings.json` file should now look like this:
 
 ```json
-"Auth0": {
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "Auth0": {
     "Domain": "aspnetcore-physer-blog.eu.auth0.com",
     "ClientId": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  }
 }
 ```
 
@@ -139,13 +153,9 @@ Cool! Our ASP.NET Core application is now integrated with the Auth0 SDK. In the 
 
 So we've set up our Auth0 integration, great! It won't do us much good though until we've set up a way to authenticate. We need to be able to log in (and out, preferably) through our ASP.NET Core application.
 
-Let's switch back to Visual Studio Code and head over to the `Program.cs` file, the entry point of our application.
+Let's switch back to Visual Studio Code!
 
-Near the bottom of the file you can spot a line containing: `app.UseAuthorization();`. Add the following line above it: `app.UseAuthentication();`. This sets our application up to not only use authorization policies but also support authentication.
-
-> Reminder: Authentication is the process of determining the validity of a user's identity. Is the user who it says it is? Whereas authorization is the process of verifying the access of a user. Once a user is identified, is it allowed to do what it's trying to do?
-
-For simplicity, I'm going to create a new Razor Pages page that takes care of logging the user in and another one that takes care of logging the user out. This is not the only way to this though, you could also set up minimal endpoints, for instance.
+For simplicity, I'm going to create a new Razor Pages page that takes care of logging the user in and another one that takes care of logging the user out. This is not the only way to this though, you could also set up minimal API endpoints.
 
 Let's add a new empty Razor page and its code-behind file. Run `touch Pages/Login.cshtml & touch Pages/Login.cshtml.cs`
 
@@ -195,7 +205,7 @@ Run your application and if you're still logged in (you might have to login agai
 
 ![User details from .NET Identity](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/aspnet-user-identity-details.png)
 
-Let's also quickly add a page to log out from the application. We will create a page similar to the login page, except now it will log you out. Run `touch Pages/Logout.cshtml & touch Pages/Logout.cshtml.cs` (or create them in any way you're comfortable).
+Let's also quickly add a page to log out from the application. We will create a page similar to the login page, except now it will log you out. Run `touch Pages/Logout.cshtml & touch Pages/Logout.cshtml.cs` (or create them in any way you'd like).
 
 Open `Pages/Logout.cshtml` and add the following lines:
 
@@ -237,7 +247,7 @@ Awesome! We can log in using Auth0 as an identity management platform and we can
 
 Okay, now that we're able to log in (and out) as a user, let's set up some pages that only (privileged) users can access.
 
-Let's create a page only an authenticated user can access, regardless of his roles and rights. We'll create a page and its code-behind like so: `touch Pages/Authenticated.cshtml & touch Pages/Authenticated.cshtml.cs`.
+Let's create a page only an authenticated user can access, regardless of their roles and rights. We'll create a page and its code-behind like so: `touch Pages/Authenticated.cshtml & touch Pages/Authenticated.cshtml.cs`.
 
 Open up the `Pages/Authenticated.cshtml` file and add the following lines:
 
@@ -402,6 +412,7 @@ As with all my blog posts, the full code is available in the repository of this 
 ## References
 
 - [Microsoft - Identity management solutions in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/identity-management-solutions?view=aspnetcore-9.0)
+- [Auth0 - Homepage](https://auth0.com/)
 - [Microsoft - .NET Claims API reference](https://learn.microsoft.com/en-us/dotnet/api/system.security.claims?view=net-9.0)
 - [Microsoft - ASP.NET Core role-based authorization](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/roles?view=aspnetcore-9.0)
 - [Microsoft - ASP.NET Core Razor Pages introduction](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-9.0&tabs=visual-studio)
