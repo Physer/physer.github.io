@@ -27,6 +27,22 @@ This blogpost is a comprehensive post about setting up an ASP.NET Core applicati
 
 In order to use ASP.NET Core's built-in [role-based-authorization](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/roles?view=aspnetcore-9.0) in conjunction with Auth0, we can leverage Auth0's post-login actions to set Microsoft's role claim value to the assigned user's roles. This allows for clean management of users and roles in Auth0 whilst still retaining full out-of-the-box support in ASP.NET Core with roles.
 
+## Table of contents
+
+- [Introduction](#introduction)
+- [TL;DR](#tldr)
+- [Table of contents](#table-of-contents)
+- [Setting up our ASP.NET Core project](#setting-up-our-aspnet-core-project)
+- [Setting up our Auth0 tenant and application](#setting-up-our-auth0-tenant-and-application)
+- [Integrating our .NET project with Auth0](#integrating-our-net-project-with-auth0)
+- [Creating UI support for logging in and out](#creating-ui-support-for-logging-in-and-out)
+- [Creating pages in .NET only authenticated and authorized users can visit](#creating-pages-in-net-only-authenticated-and-authorized-users-can-visit)
+- [Assigning a role to our user in Auth0](#assigning-a-role-to-our-user-in-auth0)
+- [Writing an Auth0 post-login Action](#writing-an-auth0-post-login-action)
+- [Testing our .NET application](#testing-our-net-application)
+- [Wrapping up](#wrapping-up)
+- [References](#references)
+
 ## Setting up our ASP.NET Core project
 
 For simplicity this blog post will focus on setting up identity management with an [ASP.NET Core Razor Pages](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-9.0&tabs=visual-studio) project. However, everything mentioned applies to [ASP.NET Core MVC](https://learn.microsoft.com/en-us/aspnet/core/mvc/overview?view=aspnetcore-9.0) and [ASP.NET Core Blazor](https://learn.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-9.0) applications as well.
