@@ -397,7 +397,7 @@ This way you can easily use Auth0 as your identity management solution without h
 
 I hope this blogpost has been useful to you. Feel free to get in touch with my at my [about page](https://blog.alexschouls.com/about/) if you have any comments, questions or concerns.
 
-As with all my blog posts, the full code is available in the repository of this site: [physer.github.io](https://github.com/Physer/physer.github.io/tree/main/code/2024-07-08-azurite-https-in-docker).
+As with all my blog posts, the full code is available in the repository of this site: [physer.github.io](https://github.com/Physer/physer.github.io/tree/main/code/2025-07-04-auth0-role-based-auth-aspnet).
 
 ## References
 
