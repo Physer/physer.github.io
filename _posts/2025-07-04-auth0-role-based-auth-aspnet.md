@@ -153,7 +153,51 @@ Cool! Our ASP.NET Core application is now integrated with the Auth0 SDK. In the 
 
 So we've set up our Auth0 integration, great! It won't do us much good though until we've set up a way to authenticate. We need to be able to log in (and out, preferably) through our ASP.NET Core application.
 
-Let's switch back to Visual Studio Code!
+Let's switch back to Visual Studio Code and head over to the `Program.cs` file, the entry point of our application.
+
+Near the bottom of the file you can spot a line containing: `app.UseAuthorization();`. Add the following line above it: `app.UseAuthentication();`. This sets our application up to not only use authorization policies but also support authentication.
+
+This means your `Program.cs` file now looks something like this:
+
+```csharp
+using Auth0.AspNetCore.Authentication;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddRazorPages();
+
+builder.Services.AddAuth0WebAppAuthentication(options =>
+{
+    options.Domain = builder.Configuration["Auth0:Domain"] ?? throw new InvalidOperationException("Auth0:Domain configuration is missing.");
+    options.ClientId = builder.Configuration["Auth0:ClientId"] ?? throw new InvalidOperationException("Auth0:ClientId configuration is missing.");
+});
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapStaticAssets();
+app.MapRazorPages()
+   .WithStaticAssets();
+
+app.Run();
+```
+
+> Reminder: Authentication is the process of determining the validity of a user's identity. Is the user who it says it is? Whereas authorization is the process of verifying the access of a user. Once a user is identified, is it allowed to do what it's trying to do?
 
 For simplicity, I'm going to create a new Razor Pages page that takes care of logging the user in and another one that takes care of logging the user out. This is not the only way to this though, you could also set up minimal API endpoints.
 
