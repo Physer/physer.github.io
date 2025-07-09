@@ -21,9 +21,15 @@ This blog post explains how to set-up your Auth0 tenant so that ASP.NET Core wil
 
 > Disclaimer: This blog post is _not_ sponsored or supported by Auth0 in any way. Everything I mention about Auth0 and ASP.NET Core is my own opinion and experience and does not reflect the Auth0 or .NET communities.
 
+## TL;DR
+
+This blogpost is a comprehensive post about setting up an ASP.NET Core application and Auth0 tenant from scratch. If you're only interested in the part where we configure Auth0 to pass the assigned role to the .NET application, please take a look at the chapter [Writing an Auth0 post-login Action](#writing-an-auth0-post-login-action) and optionally at the preceding [Creating pages in .NET only authenticated and authorized users can visit](#creating-pages-in-net-only-authenticated-and-authorized-users-can-visit).
+
+In order to use ASP.NET Core's built-in [role-based-authorization](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/roles?view=aspnetcore-9.0) in conjunction with Auth0, we can leverage Auth0's post-login actions to set Microsoft's role claim value to the assigned user's roles. This allows for clean management of users and roles in Auth0 whilst still retaining full out-of-the-box support in ASP.NET Core with roles.
+
 ## Setting up our ASP.NET Core project
 
-For simplicity this blog post will focus on setting up identity management with an [ASP.NET Core Razor Pages]() project. However, everything mentioned applies to [ASP.NET Core MVC]() and [ASP.NET Core Blazor]() applications as well.
+For simplicity this blog post will focus on setting up identity management with an [ASP.NET Core Razor Pages](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-9.0&tabs=visual-studio) project. However, everything mentioned applies to [ASP.NET Core MVC](https://learn.microsoft.com/en-us/aspnet/core/mvc/overview?view=aspnetcore-9.0) and [ASP.NET Core Blazor](https://learn.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-9.0) applications as well.
 
 > All development in this blog post by me is done using Visual Studio Code and the .NET CLI on WSL2 with the .NET 9 SDK.
 
@@ -110,7 +116,7 @@ As you can see from the preceding code, the necessary Auth0 tenant settings are 
 
 ![Application's client ID and domain](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/auth0-application-basic-info.png)
 
-Whilst these values aren't secret, they are sensitive information. Please be sure to use care when checking these details into a version control system. Where necessary, use [User Secrets]() for local development and a proper secret management tool for Cloud development such as [Azure Key Vault]().
+Whilst these values aren't secret, they are sensitive information. Please be sure to use care when checking these details into a version control system. Where necessary, use [User Secrets](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-9.0&tabs=windows) for local development and a proper secret management tool for Cloud development such as [Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/general/overview).
 
 For demo purposes, I'm simply going to add them to our `appsettings.json` but be sure to not publish your settings online like that.
 
@@ -353,7 +359,7 @@ exports.onExecutePostLogin = async (event, api) => {
 };
 ```
 
-This implementation will set the value of `roles`, which is an array of assigned roles to the user, to the value of the claim type `http://schemas.microsoft.com/ws/2008/06/identity/claims/role`. .NET uses this claim to determine the roles for its [role-based authorization]().
+This implementation will set the value of `roles`, which is an array of assigned roles to the user, to the value of the claim type `http://schemas.microsoft.com/ws/2008/06/identity/claims/role`. .NET uses this claim to determine the roles for its [role-based authorization](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/roles?view=aspnetcore-9.0).
 
 Make sure you save and deploy your newly defined trigger, using the buttons on the top right:
 
@@ -394,3 +400,15 @@ I hope this blogpost has been useful to you. Feel free to get in touch with my a
 As with all my blog posts, the full code is available in the repository of this site: [physer.github.io](https://github.com/Physer/physer.github.io/tree/main/code/2024-07-08-azurite-https-in-docker).
 
 ## References
+
+- [Microsoft - Identity management solutions in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/identity-management-solutions?view=aspnetcore-9.0)
+- [Microsoft - .NET Claims API reference](https://learn.microsoft.com/en-us/dotnet/api/system.security.claims?view=net-9.0)
+- [Microsoft - ASP.NET Core role-based authorization](https://learn.microsoft.com/en-us/aspnet/core/security/authorization/roles?view=aspnetcore-9.0)
+- [Microsoft - ASP.NET Core Razor Pages introduction](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-9.0&tabs=visual-studio)
+- [Microsoft - ASP.NET Core MVC overview](https://learn.microsoft.com/en-us/aspnet/core/mvc/overview?view=aspnetcore-9.0)
+- [Microsoft - ASP.NET Core Blazor overview](https://learn.microsoft.com/en-us/aspnet/core/blazor/?view=aspnetcore-9.0)
+- [Auth0 - Getting started](https://auth0.com/docs/get-started/auth0-overview)
+- [Microsoft - User secrets in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-9.0&tabs=windows)
+- [Microsoft - Azure Key Vault overview](https://learn.microsoft.com/en-us/azure/key-vault/general/overview)
+- [Auth0 - Management dashboard](https://manage.auth0.com/)
+- [Auth0 - Actions documentation](https://auth0.com/docs/customize/actions)
