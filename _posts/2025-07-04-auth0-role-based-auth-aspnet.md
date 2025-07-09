@@ -19,7 +19,7 @@ Auth0 is a comprehensive cloud-based authentication, authorization and user mana
 When using Auth0 as your identity management solution in ASP.NET Core applications, you might want to assign roles to users in Auth0 and propagate those to your ASP.NET Core application.
 This blog post explains how to set-up your Auth0 tenant so that ASP.NET Core will be able to automatically capture the roles onto the [.NET claims-based identity](https://learn.microsoft.com/en-us/dotnet/api/system.security.claims?view=net-9.0) so you can create role-based policies.
 
-> Disclaimer: This blog post is _not_ sponsored or supported by Auth0 in any way. Everything I mention about Auth0 and ASP.NET Core is my own opinion and experience and does not reflect the Auth0 community.
+> Disclaimer: This blog post is _not_ sponsored or supported by Auth0 in any way. Everything I mention about Auth0 and ASP.NET Core is my own opinion and experience and does not reflect the Auth0 or .NET communities.
 
 ## Setting up our ASP.NET Core project
 
@@ -59,6 +59,8 @@ Now that we've set up our Razor Pages project, let's head over to Auth0 to set u
 ## Setting up our Auth0 tenant and application
 
 Head over to https://auth0.com and log in or sign up. Select the tenant you want to apply this to or create a new one.
+
+> I'm on a free plan with my Auth0 tenant.
 
 I'm not going into details on how to set up a new tenant in Auth0 or what a tenant is exactly. If you'd like more information about this, please view Auth0's [Get Started](https://auth0.com/docs/get-started/auth0-overview) documentation.
 
@@ -297,12 +299,98 @@ Run your application, verify you're logged in by navigating to the `/login` endp
 
 As you can see, we can't access our page even though we're logged in. We don't have the proper role assigned to our logged-in user! Let's fix that in Auth0.
 
-## Assigning roles to our users in Auth0
+## Assigning a role to our user in Auth0
+
+Auth0 offers the capability of creating, managing and assigning roles to users. To do so, head over to the [management dashboard](https://manage.auth0.com/) of your Auth0 tenant and select the sub item `Roles` under the `User Management` menu item on the left-hand side.
+
+Click on the big `+ Create Role` button on the top-right side and enter your role name and description. Remember, in the previous chapter we've mentioned how important it is that your role in your code matches the role in Auth0. For us, that means we will enter the name `Admin` here. Don't forget to hit `Create`!
+
+![Creating an admin role in Auth0](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/auth0-create-role.png)
+
+Once our role is created, we can assign it to our user. You can do this through multiple screens in the Auth0 management dashboard but since we're already on the role details of our Admin role, we'll do it from there.
+
+Head over to the `Users` tab on the role details screen of your Admin role. Press `Add Users` and find the user you'd like to give admin rights. Note you'll have to type first in order for your user to pop-up. Select the user and press `Assign`.
+
+![Assign a role to a user in Auth0](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/auth0-assign-role.png)
+
+Great! We now have a user with an assigned `Admin` role. However, by default Auth0 does not expose any roles to the ID token that .NET parses for user identification.
+
+This means that we need to be somehow able to pass the role claim to the ID token. Luckily, Auth0 has just the thing for this! We can write custom [Actions](https://auth0.com/docs/customize/actions) in Auth0 that can access the Auth0 authentication objects and interact with them.
 
 ## Writing an Auth0 post-login Action
 
-## Setting the policies in .NET
+By default, simply assigning a role to a user does not include the role as a claim on the token that's passed down to the application.
+
+To achieve this, we can leverage the [Auth0 Actions](https://auth0.com/docs/customize/actions). These Actions are small pieces of JavaScript code that can hook into the Auth0 ecosystem and the user registration and login pipelines.
+
+> This is not an in-depth guide about Auth0 Actions. Please view the linked documentation for a more detailed look.
+
+Let's open up our Auth0 management dashboard and navigate to the `Library` sub item under the `Actions` menu item. Once there, on the right-hand side, click the `Create Action` button and select `Build from scratch`.
+
+In the popup that opens, fill in a meaningful name (e.g. `PostLogin_AddRoleToUser`). For trigger make sure you select the `Login / Post Login` trigger and for the runtime select the recommended runtime (at the time of writing that would be Node v22).
+
+![Create an action in Auth0](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/auth0-create-action.png)
+
+Once you've created the trigger, you'll be redirected to the editing view. Here you'll get a small template with a single (not commented-out) method in JavaScript with a bunch of comments explaining it:
+
+```js
+exports.onExecutePostLogin = async (event, api) => {};
+```
+
+This method can capture Auth0 API objects and interact with them. In our case, we want to set a custom claim on the ID token. However, not just any claim will suffice (unless you'd like to change the .NET code to accept your custom claim, in which case that's perfectly valid). Since .NET specifically looks at a certain claim name for a role, we can set this as our custom claim in Auth0.
+
+Update the previously mentioned method like so:
+
+```js
+exports.onExecutePostLogin = async (event, api) => {
+  const roles = event.authorization?.roles;
+  if (roles) {
+    api.idToken.setCustomClaim(
+      "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
+      roles
+    );
+  }
+};
+```
+
+This implementation will set the value of `roles`, which is an array of assigned roles to the user, to the value of the claim type `http://schemas.microsoft.com/ws/2008/06/identity/claims/role`. .NET uses this claim to determine the roles for its [role-based authorization]().
+
+Make sure you save and deploy your newly defined trigger, using the buttons on the top right:
+
+![Deploy your Auth0 trigger](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/auth0-deploy-trigger.png)
+
+Once our trigger has been deployed to Auth0, we can link it to the post-login pipeline. Head over to the `Triggers` sub navigation item in the left-hand menu. Select `post-login` from the `Sign up & Login` trigger list.
+
+![Post-login trigger selection in Auth0](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/auth0-post-login-trigger.png)
+
+A Post Login flow will pop up. On the right-hand side you can switch to the `Custom` tab and select your newly deployed trigger. Drag this trigger in between `Start` and `Complete` like so:
+
+![The post login flow in Auth0](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/auth0-post-login-flow.png)
+
+Don't forget to press the `Apply` button in the top right!
+
+Now that we're able to pass the role information in our token, our .NET application will use this information to check on the proper roles.
+
+## Testing our .NET application
+
+Let's head over to our .NET application and run it (`dotnet run`). Open the application in your browser and make sure you're logged out by going to the `/logout` endpoint (after all, the claim is only set when a user logs in - so it has not effect on already logged in users).
+
+Go to the `/login` endpoint and log in with your admin account. Once logged in, navigate to the `/admin` endpoint and you should see a page that says you're an admin!
+
+![The Admin page in your ASP.NET application](/assets/images/2025-07-04-auth0-role-based-auth-aspnet/aspnet-admin-page.png)
+
+If you'd like to test that this works properly with a non-admin user too, feel free to create another user that does not have the role assigned in Auth0 to check it. You won't be able to access the `/admin` page anymore with that user.
+
+Note how we haven't changed anything in our authentication and authorization process in order to make this role-based authorization work! That's because we use Microsoft's claim to assign the role.
 
 ## Wrapping up
+
+In this blogpost you've seen how to set-up a .NET application using ASP.NET Core Razor Pages and Auth0 authentication from scratch, implementing .NET's role-based authorization with a post-login trigger in Auth0.
+
+This way you can easily use Auth0 as your identity management solution without having to resort to writing custom code to sort out your authorization. You can easily assign roles to users in Auth0 and use these in .NET's built-in role-based authorization mechanism.
+
+I hope this blogpost has been useful to you. Feel free to get in touch with my at my [about page](https://blog.alexschouls.com/about/) if you have any comments, questions or concerns.
+
+As with all my blog posts, the full code is available in the repository of this site: [physer.github.io](https://github.com/Physer/physer.github.io/tree/main/code/2024-07-08-azurite-https-in-docker).
 
 ## References
