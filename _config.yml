@@ -6,9 +6,12 @@ description: >-
 domain: physer.github.io
 baseurl: ""
 url: ""
-github_username:  physer
+github_username: physer
 
 # Build settings
 theme: minima
 plugins:
   - jekyll-feed
+
+# Umami settings
+umami_tracking_id: a433864f-ea66-4858-bf6c-9b8a0aeb669c
