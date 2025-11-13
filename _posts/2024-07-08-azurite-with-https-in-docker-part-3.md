@@ -35,7 +35,7 @@ If there ever was a silver bullet for simplifying authentication through code, i
 The `DefaultAzureCredential` mechanism goes through different types of authentication methods chronologically. Stopping when a certain method is satisfied.
 
 You can see the order in this diagram. More information can be found at the link above.
-![authentication flow](https://raw.githubusercontent.com/Azure/azure-sdk-for-net/main/sdk/identity/Azure.Identity/images/mermaidjs/DefaultAzureCredentialAuthFlow.svg)
+![authentication flow](/assets/images/2024-08-07-azurite-with-https-in-docker/default-azure-credential-authentication-flow-expanded.png)
 
 As you can see, these can be credentials meant for deployed services (e.g. an Azure App Service), as well as for development credentials in Visual Studio or interactive through a user input dialog.
 
