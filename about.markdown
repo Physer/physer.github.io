@@ -10,7 +10,7 @@ My name is Alex Schouls.
 
 I'm a senior .NET developer focusing on high-availability, high-performing back-end solutions. My favourite stacks and technologies are: .NET, C# and Azure!
 
-Currently I'm employed as a .NET XPRT at [XPRTZ](https://www.xprtz.net/) where I'm working for [De Nederlandsche Bank](https://www.dnb.nl/) as a full-stack developer for the team responsible for all statistical data. De Nederlandsche Bank is the Dutch [monetary authority](https://en.wikipedia.org/wiki/Central_bank).
+Currently I'm employed as a senior sofware engineer at [BeterDichtbij](https://www.beterdichtbij.nl/) where I'm contributing to the healthcare platform for digital communication with healthcare professionals. I'm using .NET in a native Azure environment.
 
 If you'd like to keep in touch with me, you can follow me on these platforms:
 
