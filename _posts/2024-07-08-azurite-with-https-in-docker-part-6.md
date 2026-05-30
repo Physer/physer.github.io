@@ -17,11 +17,11 @@ In this final part we're going to set up the Azure resources for our blob storag
 
 You can read the previous parts here:
 
-- [Part 1](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-1.html)
-- [Part 2](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-2.html)
-- [Part 3](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-3.html)
-- [Part 4](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-4.html)
-- [Part 5](https://blog.alexschouls.com/azure/2024/08/07/azurite-with-https-in-docker-part-5.html)
+- [Part 1](https://blog.alexschouls.nl/azure/2024/08/07/azurite-with-https-in-docker-part-1.html)
+- [Part 2](https://blog.alexschouls.nl/azure/2024/08/07/azurite-with-https-in-docker-part-2.html)
+- [Part 3](https://blog.alexschouls.nl/azure/2024/08/07/azurite-with-https-in-docker-part-3.html)
+- [Part 4](https://blog.alexschouls.nl/azure/2024/08/07/azurite-with-https-in-docker-part-4.html)
+- [Part 5](https://blog.alexschouls.nl/azure/2024/08/07/azurite-with-https-in-docker-part-5.html)
 
 ## Setting up Azure resources
 

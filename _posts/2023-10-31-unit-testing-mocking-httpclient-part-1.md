@@ -1,7 +1,7 @@
 ---
 layout: post
-title:  "Mocking HTTP calls in typed clients in Unit Tests - Part 1"
-date:   2023-10-31 15:33 +0200
+title: "Mocking HTTP calls in typed clients in Unit Tests - Part 1"
+date: 2023-10-31 15:33 +0200
 categories: unit-testing
 ---
 
@@ -23,14 +23,14 @@ In this first part of the series, we'll focus on building an implementation of a
 
 In my examples I will use the following libraries and frameworks:
 
-* [XUnit](https://xunit.net/)
-* [FluentAssertions](https://fluentassertions.com/)
+- [XUnit](https://xunit.net/)
+- [FluentAssertions](https://fluentassertions.com/)
 
 A quick table of contents:
 
-* [Introduction](#introduction)
-* [Terminology](#terminology)
-* [User API implementation](#user-api-implementation)
+- [Introduction](#introduction)
+- [Terminology](#terminology)
+- [User API implementation](#user-api-implementation)
 
 ## Terminology
 
@@ -119,46 +119,46 @@ If you've followed along with me, you should see something along the lines of:
 
 ```json
 [
-    {
-        "name": "Leanne Graham",
-        "email": "Sincere@april.biz"
-    },
-    {
-        "name": "Ervin Howell",
-        "email": "Shanna@melissa.tv"
-    },
-    {
-        "name": "Clementine Bauch",
-        "email": "Nathan@yesenia.net"
-    },
-    {
-        "name": "Patricia Lebsack",
-        "email": "Julianne.OConner@kory.org"
-    },
-    {
-        "name": "Chelsey Dietrich",
-        "email": "Lucio_Hettinger@annie.ca"
-    },
-    {
-        "name": "Mrs. Dennis Schulist",
-        "email": "Karley_Dach@jasper.info"
-    },
-    {
-        "name": "Kurtis Weissnat",
-        "email": "Telly.Hoeger@billy.biz"
-    },
-    {
-        "name": "Nicholas Runolfsdottir V",
-        "email": "Sherwood@rosamond.me"
-    },
-    {
-        "name": "Glenna Reichert",
-        "email": "Chaim_McDermott@dana.io"
-    },
-    {
-        "name": "Clementina DuBuque",
-        "email": "Rey.Padberg@karina.biz"
-    }
+  {
+    "name": "Leanne Graham",
+    "email": "Sincere@april.biz"
+  },
+  {
+    "name": "Ervin Howell",
+    "email": "Shanna@melissa.tv"
+  },
+  {
+    "name": "Clementine Bauch",
+    "email": "Nathan@yesenia.net"
+  },
+  {
+    "name": "Patricia Lebsack",
+    "email": "Julianne.OConner@kory.org"
+  },
+  {
+    "name": "Chelsey Dietrich",
+    "email": "Lucio_Hettinger@annie.ca"
+  },
+  {
+    "name": "Mrs. Dennis Schulist",
+    "email": "Karley_Dach@jasper.info"
+  },
+  {
+    "name": "Kurtis Weissnat",
+    "email": "Telly.Hoeger@billy.biz"
+  },
+  {
+    "name": "Nicholas Runolfsdottir V",
+    "email": "Sherwood@rosamond.me"
+  },
+  {
+    "name": "Glenna Reichert",
+    "email": "Chaim_McDermott@dana.io"
+  },
+  {
+    "name": "Clementina DuBuque",
+    "email": "Rey.Padberg@karina.biz"
+  }
 ]
 ```
 
@@ -168,4 +168,4 @@ That's what we're going to mock in our Unit Test. Whether you use `GetAsync`, `S
 
 That's it! We now have an implementation that we can start to write some tests for.
 
-Go to part 2: [Mocking HTTP calls in typed clients in Unit Tests - Part 2](https://blog.alexschouls.com/unit-testing/2023/10/31/unit-testing-mocking-httpclient-part-2.html).
+Go to part 2: [Mocking HTTP calls in typed clients in Unit Tests - Part 2](https://blog.alexschouls.nl/unit-testing/2023/10/31/unit-testing-mocking-httpclient-part-2.html).

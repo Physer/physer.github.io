@@ -423,7 +423,7 @@ exports.onExecutePostLogin = async (event, api) => {
   if (roles) {
     api.idToken.setCustomClaim(
       "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
-      roles
+      roles,
     );
   }
 };
@@ -465,7 +465,7 @@ In this blogpost you've seen how to set-up a .NET application using ASP.NET Core
 
 This way you can easily use Auth0 as your identity management solution without having to resort to writing custom code to sort out your authorization. You can easily assign roles to users in Auth0 and use these in .NET's built-in role-based authorization mechanism.
 
-I hope this blogpost has been useful to you. Feel free to get in touch with my at my [about page](https://blog.alexschouls.com/about/) if you have any comments, questions or concerns.
+I hope this blogpost has been useful to you. Feel free to get in touch with my at my [about page](https://blog.alexschouls.nl/about/) if you have any comments, questions or concerns.
 
 As with all my blog posts, the full code is available in the repository of this site: [physer.github.io](https://github.com/Physer/physer.github.io/tree/main/code/2025-07-04-auth0-role-based-auth-aspnet).
 

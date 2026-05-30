@@ -1,14 +1,14 @@
 ---
 layout: post
-title:  "Mocking HTTP calls in typed clients in Unit Tests - Part 2"
-date:   2023-10-31 15:33 +0200
+title: "Mocking HTTP calls in typed clients in Unit Tests - Part 2"
+date: 2023-10-31 15:33 +0200
 categories: unit-testing
 ---
 
 ## Introduction
 
 Welcome to the second part of the series on how to mock HTTP calls in typed HTTP clients.
-In case you missed part 1, here's a link: [Mocking HTTP calls in typed clients in Unit Tests - Part 1](https://blog.alexschouls.com/unit-testing/2023/10/31/unit-testing-mocking-httpclient-part-1.html).
+In case you missed part 1, here's a link: [Mocking HTTP calls in typed clients in Unit Tests - Part 1](https://blog.alexschouls.nl/unit-testing/2023/10/31/unit-testing-mocking-httpclient-part-1.html).
 
 In this part we'll try to write a unit test the way we would normally do with dependencies.
 We'll dive deeper into the problem and why it doesn't work.
@@ -17,9 +17,9 @@ In part 3 and the last part of this series, we'll fix this problem and change ou
 
 A quick table of contents:
 
-* [Introduction](#introduction)
-* [Writing a unit test - the regular way](#writing-a-unit-test---the-regular-way)
-* [The problem](#the-problem)
+- [Introduction](#introduction)
+- [Writing a unit test - the regular way](#writing-a-unit-test---the-regular-way)
+- [The problem](#the-problem)
 
 ## Writing a unit test - the regular way
 
@@ -128,4 +128,4 @@ Now we're stuck with a non-working unit test that doesn't really do anything for
 
 Let's take a look in the next part of the series on how to properly fix this and turn this around!
 
-Go to part 3: [Mocking HTTP calls in typed clients in Unit Tests - Part 3](https://blog.alexschouls.com/unit-testing/2023/10/31/unit-testing-mocking-httpclient-part-3.html).
+Go to part 3: [Mocking HTTP calls in typed clients in Unit Tests - Part 3](https://blog.alexschouls.nl/unit-testing/2023/10/31/unit-testing-mocking-httpclient-part-3.html).
