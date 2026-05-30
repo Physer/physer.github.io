@@ -1,26 +1,26 @@
 ---
 layout: post
-title:  "Mocking HTTP calls in typed clients in Unit Tests - Part 3"
-date:   2023-10-31 15:33 +0200
+title: "Mocking HTTP calls in typed clients in Unit Tests - Part 3"
+date: 2023-10-31 15:33 +0200
 categories: unit-testing
 ---
 
 ## Introduction
 
 Welcome to the third part of the series on how to mock HTTP calls in typed HTTP clients.
-In case you missed part 1, here's a link: [Mocking HTTP calls in typed clients in Unit Tests - Part 1](https://blog.alexschouls.com/unit-testing/2023/10/31/unit-testing-mocking-httpclient-part-1.html) and for part 2: [Mocking HTTP calls in typed clients in Unit Tests - Part 2](https://blog.alexschouls.com/unit-testing/2023/10/31/unit-testing-mocking-httpclient-part-2.html)
+In case you missed part 1, here's a link: [Mocking HTTP calls in typed clients in Unit Tests - Part 1](https://blog.alexschouls.nl/unit-testing/2023/10/31/unit-testing-mocking-httpclient-part-1.html) and for part 2: [Mocking HTTP calls in typed clients in Unit Tests - Part 2](https://blog.alexschouls.nl/unit-testing/2023/10/31/unit-testing-mocking-httpclient-part-2.html)
 
 In this blog post we'll take a look at how the HTTP client works under the hood and why we can't just mock the dependency like we normally do.
 Once we have a good grasp of that, we'll work on changing our unit test to actually mock an HTTP response.
 
 A quick table of contents:
 
-* [Introduction](#introduction)
-* [An inside look into the HTTP Client](#an-inside-look-into-the-http-client)
-* [How to unit test it](#how-to-unit-test-it)
-* [Conclusion](#conclusion)
-* [Complete code](#complete-code)
-* [References](#references)
+- [Introduction](#introduction)
+- [An inside look into the HTTP Client](#an-inside-look-into-the-http-client)
+- [How to unit test it](#how-to-unit-test-it)
+- [Conclusion](#conclusion)
+- [Complete code](#complete-code)
+- [References](#references)
 
 ## An inside look into the HTTP Client
 
@@ -126,7 +126,7 @@ internal class FakeHttpMessageHandler : HttpMessageHandler
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var jsonUserData = @"
-        [    
+        [
             {
                 ""id"": 9,
                 ""name"": ""Glenna Reichert"",
@@ -221,10 +221,10 @@ As with all my posts, you can find the complete solution for this on my Github a
 
 ## References
 
-* [XUnit](https://xunit.net/)
-* [NSubstitute](https://nsubstitute.github.io/)
-* [FluentAssertions](https://fluentassertions.com/)
-* [JSONPlaceholder](https://jsonplaceholder.typicode.com/)
-* [Microsoft's documentation on Typed HTTP clients](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests#how-to-use-typed-clients-with-ihttpclientfactory)
-* [Microsoft's guidelines for using HttpClient](https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/http/httpclient-guidelines)
-* [Microsoft's best practices for unit testing](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices)
+- [XUnit](https://xunit.net/)
+- [NSubstitute](https://nsubstitute.github.io/)
+- [FluentAssertions](https://fluentassertions.com/)
+- [JSONPlaceholder](https://jsonplaceholder.typicode.com/)
+- [Microsoft's documentation on Typed HTTP clients](https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests#how-to-use-typed-clients-with-ihttpclientfactory)
+- [Microsoft's guidelines for using HttpClient](https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/http/httpclient-guidelines)
+- [Microsoft's best practices for unit testing](https://learn.microsoft.com/en-us/dotnet/core/testing/unit-testing-best-practices)
