@@ -6,5 +6,6 @@
   <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}"> {%- feed_meta -%} {%- if jekyll.environment ==
   'production' and
   site.google_analytics -%} {%- include google-analytics.html -%} {%- endif -%}
-  <script defer src="https://umami.alexschouls.com/script.js" data-website-id={{ site.umami_tracking_id }}></script>
+  <script data-goatcounter="https://analytics.alexschouls.nl/count"
+        async src="//analytics.alexschouls.nl/count.js"></script>
 </head>
