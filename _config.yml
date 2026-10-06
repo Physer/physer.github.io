@@ -9,6 +9,6 @@ url: ""
 github_username: physer
 
 # Build settings
-theme: minima
+remote_theme: "jekyll/minima@4de3223"
 plugins:
   - jekyll-feed
