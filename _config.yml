@@ -12,3 +12,4 @@ github_username: physer
 remote_theme: "jekyll/minima@4de3223"
 plugins:
   - jekyll-feed
+  - jekyll-remote-theme
