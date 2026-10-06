@@ -1,15 +1,27 @@
 # General settings
 title: A programmer's pondering
 email: alex_schouls@live.com
+author:
+  name: Alex Schouls
+  email: alex_schouls@live.com
 description: >-
   A blog about software engineering and architecture.
 domain: physer.github.io
 baseurl: ""
 url: ""
-github_username: physer
+
+minima:
+  skin: auto
+  social_links:
+    - { icon: "github", title: "physer", url: "https://github.com/physer" }
 
 # Build settings
 remote_theme: "jekyll/minima@4de3223"
 plugins:
   - jekyll-feed
   - jekyll-remote-theme
+  - jekyll-seo-tag
+
+sass:
+  quiet_deps: true
+  silence_deprecations: [import]
